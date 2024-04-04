@@ -1,4 +1,4 @@
-import { FC, useContext } from "react";
+import { FC, useState, useContext } from "react";
 import {
   Drawer,
   DrawerBody,
@@ -10,6 +10,7 @@ import {
   useToast,
   Tooltip,
   HStack,
+  Switch,
 } from "@chakra-ui/react";
 import { InfoOutlineIcon } from "@chakra-ui/icons";
 import Select, { MultiValue } from "react-select";
@@ -30,6 +31,32 @@ type MultiValueType = MultiValue<{ value: string; label: string }>;
 
 const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   const context = useContext(Context);
+
+  // Endpoint selection logic
+
+  const [showPathParameters, setShowPathParameters] = useState(true);
+
+  // Endpoints selection logic
+  const endpointOptions = context.endpoints.map(endpoint => ({
+    value: `${endpoint.host}${endpoint.pathname}`,
+    label: `${endpoint.host}${endpoint.pathname}`
+  }));
+
+  const selectedEndpointValues = Array.from(context.selectedEndpoints).map(identifier => ({
+    value: identifier,
+    label: identifier // Assuming identifier is a readable string
+  }));
+
+
+  const onEndpointChange = (selectedOptions: MultiValueType) => {
+    const newSelectedEndpoints = new Set<string>(selectedOptions.map(option => option.value));
+    context.setSelectedEndpoints(newSelectedEndpoints);
+  };
+
+
+  // Host selection logic
+
+
   const toast = useToast();
   const hosts = Array.from(context.allHosts);
   hosts.sort();
@@ -82,13 +109,28 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
             components={animatedComponents}
           />
           <HStack justifyContent="space-between" alignItems="center">
+            <Heading as="h2" size="sm" marginBottom="1em" marginTop="1em">
+              Select Endpoints
+            </Heading>
+            <Select
+              onChange={onEndpointChange}
+              value={selectedEndpointValues}
+              options={endpointOptions}
+              isMulti
+              name="endpoints"
+              className="basic-multi-select"
+              classNamePrefix="select"
+              components={animatedComponents}
+            />
             <Heading as="h2" size="sm" margin="1em 0">
               Set Path Parameters
+              <Switch isChecked={showPathParameters} onChange={() => setShowPathParameters(!showPathParameters)} />
             </Heading>
-            <Tooltip
-              label="Click on a part in a pathname to make it a path parameter. I.e. in /posts/1, /posts/2, click 1 or 2 to create a single endpoint /posts/:param1. This is a one way operation."
-              placement="left"
-            >
+            {showPathParameters && <ControlDynamic />}
+              <Tooltip
+                label="Click on a part in a pathname to make it a path parameter. I.e. in /posts/1, /posts/2, click 1 or 2 to create a single endpoint /posts/:param1. This is a one way operation."
+                placement="left"
+              >
               <InfoOutlineIcon />
             </Tooltip>
           </HStack>

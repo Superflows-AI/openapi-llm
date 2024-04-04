@@ -16,6 +16,7 @@ import { isEmpty } from "lodash";
 function Main() {
   const [spec, setSpec] = useState<OpenAPIObject | null>(null);
   const [endpoints, setEndpoints] = useState<Array<Endpoint>>([]);
+  const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
   const [allHosts, setAllHosts] = useState<Set<string>>(new Set());
   const [disabledHosts, setDisabledHosts] = useState<Set<string>>(new Set());
@@ -60,16 +61,48 @@ function Main() {
     };
   }, []);
 
+  const getEndpointIdentifier = (endpoint: Endpoint) => `${endpoint.host}${endpoint.pathname}`;
+
+  // const toggleEndpointSelection = useCallback((endpoint: Endpoint) => {
+  //   const identifier = getEndpointIdentifier(endpoint);
+  //   setSelectedEndpoints(prev => {
+  //     const newSet = new Set(prev);
+  //     if (newSet.has(identifier)) {
+  //       newSet.delete(identifier);
+  //     } else {
+  //       newSet.add(identifier);
+  //     }
+  //     return newSet;
+  //   });
+  // }, []);
+
+  useEffect(() => {
+    // Get identifiers for all the endpoints
+    const currentEndpoints = requestStore.endpoints();
+    setEndpoints(currentEndpoints);
+
+    // Initialize selectedEndpoints with all endpoint identifiers
+    const allEndpointIdentifiers = new Set(currentEndpoints.map(getEndpointIdentifier));
+    setSelectedEndpoints(allEndpointIdentifiers);
+  }, []); 
+
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
+
     setSpec(endpointsToOAI31(nextEndpoints, requestStore.options()).getSpec());
     setEndpoints(sortEndpoints(nextEndpoints));
-  }, []);
+  }, [selectedEndpoints]);
 
   useEffect(() => {
     requestStore.setDisabledHosts(disabledHosts);
     setSpecEndpoints();
   }, [disabledHosts]);
+
+  useEffect(() => {
+    const filteredEndpoints = requestStore.endpoints().filter(endpoint => 
+      selectedEndpoints.has(getEndpointIdentifier(endpoint))
+    );
+  }, [selectedEndpoints]);
 
   useEffect(() => {
     switch (status) {
@@ -144,6 +177,8 @@ function Main() {
         export: requestStore.export,
         import: importFn,
         options: requestStore.options,
+        selectedEndpoints, // Add this line
+        setSelectedEndpoints, // And this line
       }}
     >
       <div className={classes.wrapper}>

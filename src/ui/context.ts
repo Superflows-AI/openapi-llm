@@ -15,6 +15,8 @@ type ContextType = {
   import: typeof RequestStore.prototype.import;
   export: typeof RequestStore.prototype.export;
   options: typeof RequestStore.prototype.options;
+  selectedEndpoints: Set<string>; // Added state for selected endpoints
+  setSelectedEndpoints: (selectedEndpoints: Set<string>) => void; // Function to update the selected endpoints
 };
 
 const defaultContextValue: ContextType = {
@@ -29,6 +31,8 @@ const defaultContextValue: ContextType = {
   import: () => false,
   export: () => "",
   options: () => defaultOptions,
+  selectedEndpoints: new Set(), // Initialize with an empty set
+  setSelectedEndpoints: () => {}, // Placeholder function
 };
 
 const Context = createContext<ContextType>(defaultContextValue);
