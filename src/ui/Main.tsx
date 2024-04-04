@@ -4,7 +4,7 @@ import { RedocStandalone } from "redoc";
 import type RequestStore from "../lib/RequestStore";
 import requestStore from "./helpers/request-store";
 import { safelyGetURLHost } from "../utils/helpers";
-import { EndpointsByHost, Endpoint, Status } from "../utils/types";
+import { EndpointsByHost, Endpoint, Status, OverlengthEndpoints } from "../utils/types";
 import Context from "./context";
 import Control from "./Control";
 import Start from "./Start";
@@ -16,8 +16,13 @@ import { isEmpty } from "lodash";
 function Main() {
   const [spec, setSpec] = useState<OpenAPIObject | null>(null);
   const [endpoints, setEndpoints] = useState<Array<Endpoint>>([]);
+
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
+
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
+
+  const [overlengthEndpoints, setOverlengthEndpoints] = useState<OverlengthEndpoints>([]);
+
   const [allHosts, setAllHosts] = useState<Set<string>>(new Set());
   const [disabledHosts, setDisabledHosts] = useState<Set<string>>(new Set());
   const initialStatus = isEmpty(requestStore.get())
@@ -102,6 +107,7 @@ function Main() {
     const filteredEndpoints = requestStore.endpoints().filter(endpoint => 
       selectedEndpoints.has(getEndpointIdentifier(endpoint))
     );
+    console.log('Filtered endpoints:', filteredEndpoints)
   }, [selectedEndpoints]);
 
   useEffect(() => {
@@ -177,8 +183,10 @@ function Main() {
         export: requestStore.export,
         import: importFn,
         options: requestStore.options,
-        selectedEndpoints, // Add this line
-        setSelectedEndpoints, // And this line
+        selectedEndpoints, 
+        setSelectedEndpoints, 
+        overlengthEndpoints, 
+        setOverlengthEndpoints
       }}
     >
       <div className={classes.wrapper}>

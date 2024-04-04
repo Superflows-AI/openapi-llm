@@ -54,8 +54,8 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   };
 
 
-  // Host selection logic
 
+  // Host selection logic
 
   const toast = useToast();
   const hosts = Array.from(context.allHosts);
