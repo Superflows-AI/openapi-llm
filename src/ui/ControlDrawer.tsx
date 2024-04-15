@@ -18,6 +18,7 @@ import makeAnimated from "react-select/animated";
 import ControlDynamic from "./ControlDynamic";
 import ControlConfig from "./ControlConfig";
 import Context from "./context";
+//import countTokens from "../lib/store-helpers/count-tokens";
 
 type Props = {
   isOpen: boolean;
@@ -48,12 +49,11 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   }));
 
 
+
   const onEndpointChange = (selectedOptions: MultiValueType) => {
     const newSelectedEndpoints = new Set<string>(selectedOptions.map(option => option.value));
     context.setSelectedEndpoints(newSelectedEndpoints);
   };
-
-
 
   // Host selection logic
 

@@ -80,6 +80,8 @@ export enum PartType {
 }
 export type Parts = Array<{ part: string; type: PartType }>;
 // An Endpoint wraps a Leaf with additional data. Used as an intermediary step to simplify conversion into OAI.
+
+
 export type Endpoint = {
   // A host e.g. example.com
   host: string;
@@ -89,6 +91,10 @@ export type Endpoint = {
   parts: Parts;
   // Data for this endpoint
   data: Leaf;
+};
+
+export type TokenCounts = {
+  [key: string]: number;
 };
 
 export enum Status {
