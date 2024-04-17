@@ -1,6 +1,6 @@
 import { createContext } from "react";
 import RequestStore from "../lib/RequestStore";
-import { Endpoint, EndpointsByHost, OverlengthEndpoints } from "../utils/types";
+import { Endpoint, EndpointsByHost, OverlengthEndpoints, TokenCounts } from "../utils/types";
 import { defaultOptions } from "../lib/store-helpers/persist-options";
 
 type ContextType = {
@@ -19,6 +19,7 @@ type ContextType = {
   setSelectedEndpoints: (selectedEndpoints: Set<string>) => void; // Function to update the selected endpoints
   overlengthEndpoints: OverlengthEndpoints;
   setOverlengthEndpoints: (overlengthEndpoints: OverlengthEndpoints) => void;
+  endpointTokenCounts: TokenCounts
 };
 
 const defaultContextValue: ContextType = {
@@ -37,6 +38,7 @@ const defaultContextValue: ContextType = {
   setSelectedEndpoints: () => {}, // Placeholder function
   overlengthEndpoints: [],
   setOverlengthEndpoints: () => {},
+  endpointTokenCounts: {}
 };
 
 const Context = createContext<ContextType>(defaultContextValue);

@@ -1,5 +1,13 @@
 import { FC, useState, useContext } from "react";
 import {
+  // Accordion,
+  // AccordionItem,
+  // AccordionButton,
+  // AccordionPanel,
+  // AccordionIcon,
+  // Box,
+  // Checkbox,
+//  CheckboxGroup,
   Drawer,
   DrawerBody,
   DrawerHeader,
@@ -17,6 +25,7 @@ import Select, { MultiValue } from "react-select";
 import makeAnimated from "react-select/animated";
 import ControlDynamic from "./ControlDynamic";
 import ControlConfig from "./ControlConfig";
+import ControlDescripton from "./ControlDescription"
 import Context from "./context";
 //import countTokens from "../lib/store-helpers/count-tokens";
 
@@ -26,9 +35,13 @@ type Props = {
 };
 
 const animatedComponents = makeAnimated();
+
 const bMinusA = (a: Set<string>, b: Array<string>) =>
   b.filter((x) => !a.has(x));
 type MultiValueType = MultiValue<{ value: string; label: string }>;
+
+
+
 
 const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   const context = useContext(Context);
@@ -38,22 +51,20 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   const [showPathParameters, setShowPathParameters] = useState(true);
 
   // Endpoints selection logic
-  const endpointOptions = context.endpoints.map(endpoint => ({
-    value: `${endpoint.host}${endpoint.pathname}`,
-    label: `${endpoint.host}${endpoint.pathname}`
-  }));
+  // const endpointOptions = context.endpoints.map(endpoint => ({
+  //   value: `${endpoint.host}${endpoint.pathname}`,
+  //   label: `${endpoint.host}${endpoint.pathname}`
+  // }));
 
-  const selectedEndpointValues = Array.from(context.selectedEndpoints).map(identifier => ({
-    value: identifier,
-    label: identifier // Assuming identifier is a readable string
-  }));
+  // const selectedEndpointValues = Array.from(context.selectedEndpoints).map(identifier => ({
+  //   value: identifier,
+  //   label: identifier // Assuming identifier is a readable string
+  // }));
 
-
-
-  const onEndpointChange = (selectedOptions: MultiValueType) => {
-    const newSelectedEndpoints = new Set<string>(selectedOptions.map(option => option.value));
-    context.setSelectedEndpoints(newSelectedEndpoints);
-  };
+  // const onEndpointChange = (selectedOptions: MultiValueType) => {
+  //   const newSelectedEndpoints = new Set<string>(selectedOptions.map(option => option.value));
+  //   context.setSelectedEndpoints(newSelectedEndpoints);
+  // };
 
   // Host selection logic
 
@@ -86,6 +97,7 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
     (host) => ({ value: host, label: host })
   );
 
+  console.log('Endpoints by host', context.endpointsByHost);
   return (
     <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="lg">
       <DrawerOverlay />
@@ -108,20 +120,10 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
             classNamePrefix="select"
             components={animatedComponents}
           />
+          <HStack justifyContent="space-between">
+          <ControlDescripton />
+          </HStack>
           <HStack justifyContent="space-between" alignItems="center">
-            <Heading as="h2" size="sm" marginBottom="1em" marginTop="1em">
-              Select Endpoints
-            </Heading>
-            <Select
-              onChange={onEndpointChange}
-              value={selectedEndpointValues}
-              options={endpointOptions}
-              isMulti
-              name="endpoints"
-              className="basic-multi-select"
-              classNamePrefix="select"
-              components={animatedComponents}
-            />
             <Heading as="h2" size="sm" margin="1em 0">
               Set Path Parameters
               <Switch isChecked={showPathParameters} onChange={() => setShowPathParameters(!showPathParameters)} />

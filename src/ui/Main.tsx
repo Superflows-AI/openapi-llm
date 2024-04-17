@@ -4,7 +4,7 @@ import { RedocStandalone } from "redoc";
 import type RequestStore from "../lib/RequestStore";
 import requestStore from "./helpers/request-store";
 import { safelyGetURLHost } from "../utils/helpers";
-import { EndpointsByHost, Endpoint, Status, OverlengthEndpoints } from "../utils/types";
+import { EndpointsByHost, Endpoint, Status, OverlengthEndpoints, TokenCounts } from "../utils/types";
 import Context from "./context";
 import Control from "./Control";
 import Start from "./Start";
@@ -12,15 +12,17 @@ import classes from "./main.module.css";
 import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
 import { isEmpty } from "lodash";
+import countTokens from "./helpers/count-tokens";
+//import { describeApiEndpoint, defaultParams } from "../lib/describe-endpoints";
+// import { describeApiEndpoint, defaultParams } from "../lib/describe-endpoints"
 
 function Main() {
   const [spec, setSpec] = useState<OpenAPIObject | null>(null);
   const [endpoints, setEndpoints] = useState<Array<Endpoint>>([]);
 
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
-
+  const [endpointTokenCounts, setEndpointTokenCounts] = useState({});
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
-
   const [overlengthEndpoints, setOverlengthEndpoints] = useState<OverlengthEndpoints>([]);
 
   const [allHosts, setAllHosts] = useState<Set<string>>(new Set());
@@ -30,6 +32,8 @@ function Main() {
     : Status.RECORDING;
   const [status, setStatus] = useState(initialStatus);
 
+  console.log(endpointTokenCounts)
+
   const requestFinishedHandler = useCallback(
     (harRequest: chrome.devtools.network.Request) => {
       async function getCurrentTab() {
@@ -37,9 +41,11 @@ function Main() {
           harRequest.getContent((content) => {
             try {
               const contentStr = content || '';
+              // TODO -- HERE 
               const wasInserted = requestStore.insert(harRequest, contentStr);
               if (!wasInserted) return;
               setSpecEndpoints();
+              fetchTokenCounts();
               const host = safelyGetURLHost(harRequest.request.url);
               if (host && !allHosts.has(host)) {
                 setAllHosts((prev) => new Set(prev).add(host));
@@ -81,15 +87,39 @@ function Main() {
   //   });
   // }, []);
 
-  useEffect(() => {
-    // Get identifiers for all the endpoints
+  const fetchTokenCounts = useCallback(async () => {
     const currentEndpoints = requestStore.endpoints();
-    setEndpoints(currentEndpoints);
+      setEndpoints(currentEndpoints);
+      // Compute and set token counts for each endpoint
+      const newTokenCounts: TokenCounts = {};
+      for (const endpoint of currentEndpoints) {
+        const identifier = getEndpointIdentifier(endpoint);
+        newTokenCounts[identifier] = await countTokens(endpoint);
+      }
+    setEndpointTokenCounts(newTokenCounts);}, [selectedEndpoints]);
 
-    // Initialize selectedEndpoints with all endpoint identifiers
-    const allEndpointIdentifiers = new Set(currentEndpoints.map(getEndpointIdentifier));
-    setSelectedEndpoints(allEndpointIdentifiers);
-  }, []); 
+  // useEffect(() => {
+  //   async function fetchTokenCounts() {
+  //     // Get identifiers for all the endpoints
+  //     const currentEndpoints = requestStore.endpoints();
+  //     setEndpoints(currentEndpoints);
+  
+  //     // Compute and set token counts for each endpoint
+  //     const newTokenCounts: TokenCounts = {};
+  //     for (const endpoint of currentEndpoints) {
+  //       console.log(endpoint);
+  //       const identifier = getEndpointIdentifier(endpoint);
+  //       newTokenCounts[identifier] = await countTokens(endpoint);
+  //     }
+      
+  //     // Assuming you have a method to set token counts in your state
+  //     setEndpointTokenCounts(newTokenCounts);
+  //   }
+  //   console.log('Endpoint token counts:', endpointTokenCounts)
+  //   fetchTokenCounts().catch(console.error);
+  // }, [requestStore]);
+
+  // console.log('Endpoint token counts:', endpointTokenCounts);
 
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
@@ -165,9 +195,28 @@ function Main() {
     return result;
   }, []);
 
+  // const updateEndpointDescriptions = async (selectedEndpoints) => {
+  //   const updatePromises = selectedEndpoints.map(async (endpointId) => {
+  //     const description = await describeApiEndpoint(endpointId, defaultParams, 'gpt4');
+  //     return { endpointId, description };
+  //   });
+  
+  //   const results = await Promise.all(updatePromises);
+  
+  //   setEndpoints(prevEndpoints => prevEndpoints.map(endpoint => {
+  //     const update = results.find(res => res.endpointId === endpoint.id);
+  //     if (update) {
+  //       return { ...endpoint, description: update.description };
+  //     }
+  //     return endpoint;
+  //   }));
+  // };
+
   if (status === Status.INIT) {
     return <Start start={start} />;
   }
+
+  console.log('Token counts in main:',endpointTokenCounts)
 
   return (
     <Context.Provider
@@ -186,7 +235,8 @@ function Main() {
         selectedEndpoints, 
         setSelectedEndpoints, 
         overlengthEndpoints, 
-        setOverlengthEndpoints
+        setOverlengthEndpoints,
+        endpointTokenCounts
       }}
     >
       <div className={classes.wrapper}>

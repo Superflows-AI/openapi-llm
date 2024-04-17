@@ -110,4 +110,3 @@ export type LeafMap = { [host: string]: Record<string, RouteData> };
 
 export type EndpointsByHost = Array<{ endpoints: Endpoint[]; host: string }>;
 export type OverlengthEndpoints = Array<{ endpoints: Endpoint[]}>;
-

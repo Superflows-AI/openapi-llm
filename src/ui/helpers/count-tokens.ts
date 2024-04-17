@@ -1,4 +1,5 @@
-import { Endpoint } from "../../utils/types";
+import { Endpoint} from "../../utils/types";
+import type { Schema } from "genson-js";
 import tokenizer from "gpt-tokenizer";
 
 export interface ChatMessage {
@@ -9,9 +10,7 @@ export interface ChatMessage {
 
 export default function countTokens(endpoint: Endpoint): number {
 
-  if (endpoint) {};
-
-  const message = 'Here is a test of the token counter';
+  const message = endpointToString(endpoint)
 
   let gptMessage: ChatMessage[];
 
@@ -24,52 +23,48 @@ export default function countTokens(endpoint: Endpoint): number {
   // Per the docs, the tokenizer should be the same for 3.5-turbo and 4.
   const encoded = tokenizer.encodeChat(gptMessage, "gpt-4");
 
-  console.log('In get token count, token count:', encoded.length)
+  // console.log('In get token count, token count:', encoded.length)
   return encoded.length;
 }
 
+// Function to convert the endpoint object into a string representation
+export function endpointToString(endpoint: Endpoint): string {
+    const partsString = endpoint.parts.map(part => `${part.part} (type: ${part.type})`).join(', ');
+    const methodsString = Object.entries(endpoint.data.methods).map(([method, details]) => {
+        return `${method.toUpperCase()}: ` + methodDetailsToString(details);
+    }).join('\n');
 
-// interface WasmModuleExports {
-//   text: (input: string, model: string) => number; // Adjust the types based on actual expected input/output
-// }
+    return `Pathname: ${endpoint.pathname}\nParts: [${partsString}]\nMethods:\n${methodsString}`;
+}
 
-// function isWasmModuleExports(exports: any): exports is WasmModuleExports {
-//   return 'text' in exports && typeof exports.text === 'function';
-// }
+// Helper function to convert method details into a string
+export function methodDetailsToString(method: any): string {
+    const requestString = method.request ? Object.entries(method.request as { [mediaType: string]: any }).map(([mediaType, req]) => {
+        const bodyString = req.body ? schemaToString(req.body) : 'No body';
+        const mostRecent = req.mostRecent ? JSON.stringify(req.mostRecent) : 'No recent sample';
+        return `${mediaType}: Body: ${bodyString}, Most Recent: ${mostRecent}`;
+    }).join('\n') : 'No request info';
 
-// async function loadWasmModule(path: string): Promise<WasmModuleExports | null> {
-//   try {
-//     const response = await fetch(path);
-//     const bytes = await response.arrayBuffer();
-//     const wasmModule = await WebAssembly.instantiate(bytes);
-//     const exports = wasmModule.instance.exports;
-//     if (isWasmModuleExports(exports)) {
-//       return exports;
-//     } else {
-//       console.error("WASM exports do not match the expected interface.");
-//       return null;
-//     }
-//   } catch (error) {
-//     console.error("Error loading WASM module:", error);
-//     return null;
-//   }
-//   }
+    const responseString = method.response ? Object.entries(method.response as { [statusCode: string]: { [mediaType: string]: any } }).map(([statusCode, responses]) => {
+        return `${statusCode}: ` + Object.entries(responses).map(([mediaType, res]) => {
+            const bodyString = res.body ? schemaToString(res.body) : 'No body';
+            const mostRecent = res.mostRecent ? JSON.stringify(res.mostRecent) : 'No recent sample';
+            return `${mediaType}: Body: ${bodyString}, Most Recent: ${mostRecent}`;
+        }).join('\n');
+    }).join('\n') : 'No response info';
 
+    return `Request:\n${requestString}\nResponse:\n${responseString}`;
+}
 
+// Helper function to convert schema objects into a string representation
+export function schemaToString(schema: Schema): string {
+    let schemaDetails = schema.type ? `Type: ${schema.type}` : '';
+    if (schema.properties) {
+        const propertiesString = Object.entries(schema.properties).map(([key, val]) => {
+            return `${key}: ${schemaToString(val)}`;
+        }).join(', ');
+        schemaDetails += schemaDetails ? `, Properties: {${propertiesString}}` : `Properties: {${propertiesString}}`;
+    }
+    return schemaDetails;
+}
 
-// export default async function countTokens(endpoint: Endpoint): Promise<number> {
-//   if (endpoint) {};
-//     //console.log(endpoint);
-//   const wasmExports = await loadWasmModule('openapi-llm/dist/assets/tiktoken_bg-2d006734.wasm');
-//   if (!wasmExports) {
-//     console.log('!wasmExports -- not working')
-//     return 0;
-//   }
-
-//   // Assuming the token counting function is exposed from the WASM module.
-//   // You may need to adjust the function call depending on how it's actually exposed.
-//   const text = 'Here is a test of the token counter';
-//   const tokenCount = wasmExports.text(text, 'gpt-4');
-//   console.log('Token counter output:', tokenCount)
-//   return tokenCount;
-// }
