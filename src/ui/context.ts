@@ -20,6 +20,8 @@ type ContextType = {
   overlengthEndpoints: OverlengthEndpoints;
   setOverlengthEndpoints: (overlengthEndpoints: OverlengthEndpoints) => void;
   endpointTokenCounts: TokenCounts
+  describeSelectedEndpoints: (selectedEndpoints: Set<string>) => void;
+  endpointDescriptions: { [endpointId: string]: string }
 };
 
 const defaultContextValue: ContextType = {
@@ -38,7 +40,9 @@ const defaultContextValue: ContextType = {
   setSelectedEndpoints: () => {}, // Placeholder function
   overlengthEndpoints: [],
   setOverlengthEndpoints: () => {},
-  endpointTokenCounts: {}
+  endpointTokenCounts: {},
+  describeSelectedEndpoints: () => {},
+  endpointDescriptions: {}
 };
 
 const Context = createContext<ContextType>(defaultContextValue);

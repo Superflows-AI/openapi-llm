@@ -1,13 +1,5 @@
 import { FC, useState, useContext } from "react";
 import {
-  // Accordion,
-  // AccordionItem,
-  // AccordionButton,
-  // AccordionPanel,
-  // AccordionIcon,
-  // Box,
-  // Checkbox,
-//  CheckboxGroup,
   Drawer,
   DrawerBody,
   DrawerHeader,
@@ -27,7 +19,6 @@ import ControlDynamic from "./ControlDynamic";
 import ControlConfig from "./ControlConfig";
 import ControlDescripton from "./ControlDescription"
 import Context from "./context";
-//import countTokens from "../lib/store-helpers/count-tokens";
 
 type Props = {
   isOpen: boolean;
@@ -39,9 +30,6 @@ const animatedComponents = makeAnimated();
 const bMinusA = (a: Set<string>, b: Array<string>) =>
   b.filter((x) => !a.has(x));
 type MultiValueType = MultiValue<{ value: string; label: string }>;
-
-
-
 
 const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   const context = useContext(Context);
@@ -97,7 +85,6 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
     (host) => ({ value: host, label: host })
   );
 
-  console.log('Endpoints by host', context.endpointsByHost);
   return (
     <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="lg">
       <DrawerOverlay />

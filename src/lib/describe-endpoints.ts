@@ -1,6 +1,5 @@
 import { Endpoint } from "../utils/types"; //, Leaf, PartType }
-import { methodDetailsToString } from "../ui/helpers/count-tokens"
-
+import { methodDetailsToString } from "../ui/helpers/endpoint-parsers"
 
 // Function to process OpenAPI data
 // async function describeApiEndpoint(endpoint: Endpoint, GPTParams: GPTParams, model: string) {
@@ -88,36 +87,62 @@ export const defaultParams: GPTParams = {
   presence_penalty: 0,
 };
 
-// // Example usage of describeApiEndpoint
-// async function main(defaultParams: GPTParams) {
-//   const endpoint: Endpoint = {
-//       parts: [{ part: "userId", type: "string" }],
-//       data: {
-//           pathname: "/users",
-//           methods: {
-//               GET: {
-//                   requestHeaders: { type: "object", properties: { Authorization: { type: "string" } } },
-//                   response: {
-//                       '200': {
-//                           'application/json': {
-//                               body: { type: 'object', properties: { userId: { type: 'string' }, userName: { type: 'string' } } },
-//                               mostRecent: { userId: "123", userName: "John Doe" }
-//                           }
-//                       }
-//                   }
-//               }
-//           }
-//       },
-//       path: "/users/{userId}"
-//   };
+// export async function getLLMResponse(
+//   prompt: string | ChatGPTMessage[],
+//   params: ChatGPTParams = {},
+//   model: string,
+// ): Promise<string> {
+//   if (typeof prompt === "string" && model !== "gpt-3.5-turbo-instruct")
+//     throw new Error(
+//       `String prompts only supported with model gpt-3.5-turbo-instruct. You have selected model: ${model}`,
+//     );
 
-//   const description = await describeApiEndpoint(endpoint, defaultParams, "gpt-4");
-//   console.log(description);
+
+//   // TODO: FIX THIS
+//   const { url, options } =
+//     typeof prompt === "string"
+//       ? getOAIRequestCompletion(prompt, params, model)
+
+
+//   const response = await Promise.race([
+//     fetch(url, options),
+//     (async () => {
+//       // Time out after 45s
+//       await new Promise((resolve) => setTimeout(resolve, 45000));
+//       return new Response(
+//         JSON.stringify({ error: { message: "Timed out!" } }),
+//         {
+//           status: 500,
+//         },
+//       );
+//     })(),
+//   ]);
+//   const responseJson: ChatGPTResponse | { error: OpenAIError } =
+//     await response.json();
+//   if (response.status >= 300) {
+//     console.log(
+//       "Response from LLM: ",
+//       JSON.stringify(responseJson, undefined, 2),
+//     );
+//   }
+
+//   if (response.status === 429) {
+//     // Throwing an error triggers exponential backoff retry
+//     throw Error(
+//       // TODO: Check whether retry_after exists
+//       `OpenAI API rate limit exceeded. Full error: ${JSON.stringify(
+//         responseJson,
+//       )}`,
+//     );
+//   }
+//   if ("error" in responseJson) {
+//     throw Error(
+//       `Error from LLM provider: ${JSON.stringify(responseJson.error)}`,
+//     );
+//   }
+
+//   return removeEmptyCharacters(textFromResponse(responseJson)).trim();
 // }
-
-// main(defaultParams);
-
-
 
 function getOAIRequestCompletion(
   prompt: string,

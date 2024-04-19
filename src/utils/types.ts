@@ -110,3 +110,37 @@ export type LeafMap = { [host: string]: Record<string, RouteData> };
 
 export type EndpointsByHost = Array<{ endpoints: Endpoint[]; host: string }>;
 export type OverlengthEndpoints = Array<{ endpoints: Endpoint[]}>;
+export type InfoToDescribe = {
+
+
+
+  methods: {
+    [method: string]: {
+      // Requests may not contain a body
+      request?: {
+        // mediaType is a a mime type such as application/json
+        [mediaType: string]: {
+          body?: Schema;
+          // Sample of the most recent request
+          mostRecent?: unknown;
+        };
+      };
+      requestHeaders?: Schema;
+      response: {
+        [statusCode: string]: {
+          [mediaType: string]: {
+            body?: Schema;
+            // Sample of the most recent response
+            mostRecent?: unknown;
+          };
+        };
+      };
+      responseHeaders?: Schema;
+      queryParameters?: Schema;
+    };
+  };
+
+
+
+
+}

@@ -13,8 +13,8 @@ import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
 import { isEmpty } from "lodash";
 import countTokens from "./helpers/count-tokens";
-//import { describeApiEndpoint, defaultParams } from "../lib/describe-endpoints";
-// import { describeApiEndpoint, defaultParams } from "../lib/describe-endpoints"
+import { describeApiEndpoint, defaultParams } from "../lib/describe-endpoints";
+
 
 function Main() {
   const [spec, setSpec] = useState<OpenAPIObject | null>(null);
@@ -25,14 +25,14 @@ function Main() {
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
   const [overlengthEndpoints, setOverlengthEndpoints] = useState<OverlengthEndpoints>([]);
 
+  const [endpointDescriptions, setEndpointDescriptions] = useState({});
+
   const [allHosts, setAllHosts] = useState<Set<string>>(new Set());
   const [disabledHosts, setDisabledHosts] = useState<Set<string>>(new Set());
   const initialStatus = isEmpty(requestStore.get())
     ? Status.INIT
     : Status.RECORDING;
   const [status, setStatus] = useState(initialStatus);
-
-  console.log(endpointTokenCounts)
 
   const requestFinishedHandler = useCallback(
     (harRequest: chrome.devtools.network.Request) => {
@@ -195,6 +195,21 @@ function Main() {
     return result;
   }, []);
 
+  const describeSelectedEndpoints = async (selectedEndpoints: Set<string>) => {
+
+    const descriptions: Record<string, string> = {};
+    for (const id of selectedEndpoints) {
+      const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
+      if (endpoint) {
+        const description = await describeApiEndpoint(endpoint,  defaultParams, 'gpt4'); // Assuming defaultParams is defined
+        console.log('Description:', description)
+        descriptions[id] = 'description.test';
+      }
+    }
+    setEndpointDescriptions(descriptions); // Update the state with new descriptions
+  };
+  
+
   // const updateEndpointDescriptions = async (selectedEndpoints) => {
   //   const updatePromises = selectedEndpoints.map(async (endpointId) => {
   //     const description = await describeApiEndpoint(endpointId, defaultParams, 'gpt4');
@@ -216,7 +231,10 @@ function Main() {
     return <Start start={start} />;
   }
 
-  console.log('Token counts in main:',endpointTokenCounts)
+  //console.log('IN MAIN -- ENDPOINT INFO:')
+  //console.log('Endpoints:', endpoints)
+
+
 
   return (
     <Context.Provider
@@ -236,7 +254,9 @@ function Main() {
         setSelectedEndpoints, 
         overlengthEndpoints, 
         setOverlengthEndpoints,
-        endpointTokenCounts
+        endpointTokenCounts,
+        describeSelectedEndpoints,
+        endpointDescriptions,
       }}
     >
       <div className={classes.wrapper}>

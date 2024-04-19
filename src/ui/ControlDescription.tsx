@@ -28,10 +28,10 @@ const ControlDescription = () => {
   const context = useContext(Context);
   const [search, setSearch] = useState("");
   // Assuming that context.selectedEndpoints is an array or a Set of selected endpoint identifiers.
-  const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
+  // const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
 
   // This will be an array of strings representing the values of the selected checkboxes
-  const selectedValues: string[] = Array.from(selectedEndpoints);
+  const selectedEndpoints: string[] = Array.from(context.selectedEndpoints);
 
   const onCheckboxChange = (value: string) => {
     // Create a new Set from the existing one
@@ -41,7 +41,7 @@ const ControlDescription = () => {
     } else {
       newSelectedEndpoints.add(value);
     }
-    setSelectedEndpoints(newSelectedEndpoints);
+    context.setSelectedEndpoints(newSelectedEndpoints);
   };
 
   // Use `EndpointsByHost` to type the accumulator
@@ -81,8 +81,8 @@ const ControlDescription = () => {
                   <div className={classes.wrapper}>
                     <CheckboxGroup
                       colorScheme="green"
-                      value={selectedValues}
-                      onChange={(values) => setSelectedEndpoints(new Set(values.map(value => String(value))))}
+                      value={Array.from(context.selectedEndpoints)}
+                      onChange={(values) => context.setSelectedEndpoints(new Set(values.map(value => String(value))))}
                     >
                       <VStack align="stretch" spacing={4}> {/* Adjust 'spacing' as needed */}
                         {endpoints.map((endpoint) => {
@@ -108,14 +108,14 @@ const ControlDescription = () => {
           <Button
             mt={4} // Margin top for spacing
             colorScheme="blue"
-            isDisabled={selectedEndpoints.size === 0}
-            onClick={() => console.log('Describing selected endpoints...')}
+            isDisabled={context.selectedEndpoints.size === 0}
+            onClick={() => context.describeSelectedEndpoints(context.selectedEndpoints)}
           >
             Describe Endpoints
           </Button>
           </div>
 
-        {selectedEndpoints.size === 0 && (
+        {context.selectedEndpoints.size === 0 && (
                     <Text mt={2} color="gray.500">
                       Identify and select endpoints to describe.
                     </Text>
