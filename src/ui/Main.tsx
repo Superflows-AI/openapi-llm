@@ -4,7 +4,7 @@ import { RedocStandalone } from "redoc";
 import type RequestStore from "../lib/RequestStore";
 import requestStore from "./helpers/request-store";
 import { safelyGetURLHost } from "../utils/helpers";
-import { EndpointsByHost, Endpoint, Status, OverlengthEndpoints, TokenCounts } from "../utils/types";
+import { EndpointsByHost, Endpoint, Status, OverlengthEndpoints, TokenCounts} from "../utils/types"; //defaultParams
 import Context from "./context";
 import Control from "./Control";
 import Start from "./Start";
@@ -13,7 +13,6 @@ import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
 import { isEmpty } from "lodash";
 import countTokens from "./helpers/count-tokens";
-import { describeApiEndpoint, defaultParams } from "../lib/describe-endpoints";
 
 
 function Main() {
@@ -41,7 +40,6 @@ function Main() {
           harRequest.getContent((content) => {
             try {
               const contentStr = content || '';
-              // TODO -- HERE 
               const wasInserted = requestStore.insert(harRequest, contentStr);
               if (!wasInserted) return;
               setSpecEndpoints();
@@ -74,19 +72,6 @@ function Main() {
 
   const getEndpointIdentifier = (endpoint: Endpoint) => `${endpoint.host}${endpoint.pathname}`;
 
-  // const toggleEndpointSelection = useCallback((endpoint: Endpoint) => {
-  //   const identifier = getEndpointIdentifier(endpoint);
-  //   setSelectedEndpoints(prev => {
-  //     const newSet = new Set(prev);
-  //     if (newSet.has(identifier)) {
-  //       newSet.delete(identifier);
-  //     } else {
-  //       newSet.add(identifier);
-  //     }
-  //     return newSet;
-  //   });
-  // }, []);
-
   const fetchTokenCounts = useCallback(async () => {
     const currentEndpoints = requestStore.endpoints();
       setEndpoints(currentEndpoints);
@@ -97,29 +82,6 @@ function Main() {
         newTokenCounts[identifier] = await countTokens(endpoint);
       }
     setEndpointTokenCounts(newTokenCounts);}, [selectedEndpoints]);
-
-  // useEffect(() => {
-  //   async function fetchTokenCounts() {
-  //     // Get identifiers for all the endpoints
-  //     const currentEndpoints = requestStore.endpoints();
-  //     setEndpoints(currentEndpoints);
-  
-  //     // Compute and set token counts for each endpoint
-  //     const newTokenCounts: TokenCounts = {};
-  //     for (const endpoint of currentEndpoints) {
-  //       console.log(endpoint);
-  //       const identifier = getEndpointIdentifier(endpoint);
-  //       newTokenCounts[identifier] = await countTokens(endpoint);
-  //     }
-      
-  //     // Assuming you have a method to set token counts in your state
-  //     setEndpointTokenCounts(newTokenCounts);
-  //   }
-  //   console.log('Endpoint token counts:', endpointTokenCounts)
-  //   fetchTokenCounts().catch(console.error);
-  // }, [requestStore]);
-
-  // console.log('Endpoint token counts:', endpointTokenCounts);
 
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
@@ -201,40 +163,18 @@ function Main() {
     for (const id of selectedEndpoints) {
       const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
       if (endpoint) {
-        const description = await describeApiEndpoint(endpoint,  defaultParams, 'gpt4'); // Assuming defaultParams is defined
-        console.log('Description:', description)
+        //const description = await describeApiEndpoint(endpoint,  defaultParams, 'gpt4'); // Assuming defaultParams is defined
+        //console.log('Description:', description)
         descriptions[id] = 'description.test';
       }
     }
     setEndpointDescriptions(descriptions); // Update the state with new descriptions
   };
-  
 
-  // const updateEndpointDescriptions = async (selectedEndpoints) => {
-  //   const updatePromises = selectedEndpoints.map(async (endpointId) => {
-  //     const description = await describeApiEndpoint(endpointId, defaultParams, 'gpt4');
-  //     return { endpointId, description };
-  //   });
-  
-  //   const results = await Promise.all(updatePromises);
-  
-  //   setEndpoints(prevEndpoints => prevEndpoints.map(endpoint => {
-  //     const update = results.find(res => res.endpointId === endpoint.id);
-  //     if (update) {
-  //       return { ...endpoint, description: update.description };
-  //     }
-  //     return endpoint;
-  //   }));
-  // };
 
   if (status === Status.INIT) {
     return <Start start={start} />;
   }
-
-  //console.log('IN MAIN -- ENDPOINT INFO:')
-  //console.log('Endpoints:', endpoints)
-
-
 
   return (
     <Context.Provider

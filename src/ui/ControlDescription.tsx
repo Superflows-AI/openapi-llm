@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import {
   Accordion,
   AccordionButton,
@@ -12,12 +12,14 @@ import {
   Heading,
   Input,
   VStack,
-  Text
+  Text,
+  useToast
 } from "@chakra-ui/react";
 import { Endpoint } from "../utils/types"
 import Context from "./context";
 //import AutoSizer from "react-virtualized-auto-sizer";
 import classes from "./controlDynamic.module.css";
+import callOpenAI from '../lib/endpoint-describe'
 
 interface EndpointsByHost {
   [host: string]: Endpoint[];
@@ -27,6 +29,26 @@ interface EndpointsByHost {
 const ControlDescription = () => {
   const context = useContext(Context);
   const [search, setSearch] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const toast = useToast();
+
+  // Load the API key from local storage when the component mounts
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem('OPENAI_API_KEY');
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+  }, []);
+
+  // Handler to update local storage when the API key changes
+  const handleApiKeyChange = (newApiKey: string) => {
+    localStorage.setItem('OPENAI_API_KEY', newApiKey);
+    console.log('API KEY FROM LOCAL STORAGE:', localStorage.getItem('OPENAI_API_KEY'));
+    setApiKey(newApiKey);
+  };
+
+
+
   // Assuming that context.selectedEndpoints is an array or a Set of selected endpoint identifiers.
   // const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
 
@@ -35,6 +57,7 @@ const ControlDescription = () => {
 
   const onCheckboxChange = (value: string) => {
     // Create a new Set from the existing one
+    callOpenAI('Testing OpenAI', 'gpt-4')
     const newSelectedEndpoints = new Set(selectedEndpoints);
     if (newSelectedEndpoints.has(value)) {
       newSelectedEndpoints.delete(value);
@@ -53,10 +76,32 @@ const ControlDescription = () => {
       acc[host].push(endpoint);
       return acc;
     }, {} as EndpointsByHost);
+
+
+  const handleDescribeEndpoints = () => {
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please enter a valid OpenAI API key before proceeding.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+    context.describeSelectedEndpoints(context.selectedEndpoints);
+  };
     
   return (
     <>
       <VStack spacing={4}>
+
+      <Input
+          placeholder="Enter your OpenAI API Key. This is only ever stored locally."
+          value={apiKey}
+          onChange={(e) => handleApiKeyChange(e.target.value)}
+          className={classes.apiKeyInput}
+        />
         <Input
               placeholder="Search for endpoint..."
               value={search}
@@ -109,7 +154,7 @@ const ControlDescription = () => {
             mt={4} // Margin top for spacing
             colorScheme="blue"
             isDisabled={context.selectedEndpoints.size === 0}
-            onClick={() => context.describeSelectedEndpoints(context.selectedEndpoints)}
+            onClick={handleDescribeEndpoints}
           >
             Describe Endpoints
           </Button>
@@ -128,46 +173,3 @@ const ControlDescription = () => {
 };
 
 export default ControlDescription;
-
-
-        {/* <AccordionItem>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">Test Host</Box>
-            <AccordionIcon />
-          </AccordionButton>
-          <AccordionPanel pb={4}>
-            <Checkbox value="test">Test Endpoint</Checkbox>
-          </AccordionPanel>
-        </AccordionItem> */}
-
-{/* <Accordion allowMultiple>
-        {hosts.map(({ host, endpoints }) => (
-          <AccordionItem key={host}>
-            <h2>
-              <AccordionButton>
-                <Box flex="1" textAlign="left">{host}</Box>
-                <AccordionIcon />
-              </AccordionButton>
-            </h2>
-            <AccordionPanel>
-              <CheckboxGroup
-                value={Array.from(selectedEndpoints)}
-                onChange={(selectedValues) => setSelectedEndpoints(new Set(selectedValues))}
-              >
-                <VStack align="stretch">
-                  {endpoints.map((endpoint) => (
-                    <Checkbox
-                      key={endpoint.id}
-                      value={endpoint.id}
-                      isChecked={selectedEndpoints.has(endpoint.id)}
-                      onChange={() => handleEndpointSelect(host, endpoint)}
-                    >
-                      {endpoint.pathname}
-                    </Checkbox>
-                  ))}
-                </VStack>
-              </CheckboxGroup>
-            </AccordionPanel>
-          </AccordionItem>
-        ))}
-      </Accordion> */}
