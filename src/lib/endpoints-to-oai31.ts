@@ -30,6 +30,7 @@ const endpointsToOAI31 = (
   const uniqueAuth = new Map<AuthTypeString, SecuritySchemeObject>();
 
   for (const endpoint of endpoints) {
+
     const fullPath = `/${endpoint.parts.map((p) => p.part).join("/")}`;
     const pathParameterObjects = createPathParameterTypes(endpoint);
     uniqueHosts.add(endpoint.host);
@@ -55,16 +56,18 @@ const endpointsToOAI31 = (
         endpointMethod.response,
         endpointMethod.responseHeaders,
         options,
+        endpoint.description,
       );
       const security: SecurityRequirementObject[] = [];
       if (!isEmpty(endpoint.data.authentication)) {
         Object.values(endpoint.data.authentication).forEach((value) => {
           security.push({ [formatAuthType(value.authType)]: [] });
         });
-      }
+      };
+
       const operation: OperationObject = {
         summary: fullPath,
-        description: `**Host**: http://${endpoint.host}`,
+        description: endpoint.description || `**Host**: http://${endpoint.host}`, //
         responses,
         ...(security && { security }),
       };
@@ -78,7 +81,6 @@ const endpointsToOAI31 = (
       if (requestBody && shouldIncludeRequestBody(method)) {
         operation.requestBody = requestBody;
       }
-      // The method (e.g. get) and the operation on it
       const pathItemObject: PathItemObject = {
         [methodLower]: operation,
       };

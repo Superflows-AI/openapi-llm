@@ -71,10 +71,11 @@ export const createResponseTypes = (
   responseType: ResponseType,
   headers: Schema | undefined,
   options: Options,
+  endpointDescription?: string, 
 ) => {
+
   // Create response headers
   const headersObject: HeadersObject = {};
-
   if (headers && headers.properties) {
     if (headers.properties) {
       Object.entries(headers.properties).forEach(([name, schema]) => {
@@ -99,7 +100,7 @@ export const createResponseTypes = (
       contentObject[mediaType] = mediaTypeObject;
       const responseObject: ResponseObject = {
         content: contentObject,
-        description: "",
+        description: endpointDescription || "", 
         headers: headersObject,
       };
       responsesObject[statusCode] = responseObject;
@@ -108,14 +109,6 @@ export const createResponseTypes = (
 
   return responsesObject;
 };
-
-// export const createResponsesObj = (statusCodeObj: Array<[statusCode: string, respObj: ResponseObject]>) => {
-//   const responsesObject: ResponsesObject = {
-//     [statusCode]: responseObject,
-//   };
-
-//   return responsesObject;
-// };
 
 export const createBuilderAndDocRoot = (
   endpoints: Array<Endpoint>,

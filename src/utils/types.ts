@@ -19,88 +19,6 @@ export enum AuthType {
   APIKEY_COOKIE_ = "APIKEY_COOKIE_",
 }
 
-export interface GPTParams {
-  temperature?: number;
-  max_tokens?: number;
-  top_p?: number;
-  n?: number;
-  stream?: boolean;
-  stop?: string | string[] | null;
-  presence_penalty?: number;
-  frequency_penalty?: number;
-  logit_bias?: Function | null;
-  user?: string;
-}
-
-export interface OpenAIError {
-  message: string;
-  type: string;
-  param: string | null; // Might not be string
-  code: number | null; // Might not be number
-}
-
-export const defaultParams: GPTParams = {
-  // This max tokens number is the maximum output tokens
-  max_tokens: 1000,
-  temperature: 0.6,
-  top_p: 1,
-  frequency_penalty: 0.5,
-  presence_penalty: 0,
-};
-
-
-export interface ChatGPTResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-
-  choices: MessageChoice[] | TextChoice[];
-}
-
-export interface MessageChoice {
-  message: ChatGPTMessage;
-  finish_reason: string;
-  index: number;
-}
-
-export interface ChatGPTParams {
-  temperature?: number;
-  max_tokens?: number;
-  top_p?: number;
-  n?: number;
-  stream?: boolean;
-  stop?: string | string[] | null;
-  presence_penalty?: number;
-  frequency_penalty?: number;
-  logit_bias?: Function | null;
-  user?: string;
-}
-
-export type ChatGPTMessage =
-  | {
-      role: "system" | "user" | "assistant";
-      content: string;
-    }
-  | FunctionMessage;
-
-export interface FunctionMessage {
-  role: "function";
-  content: string;
-  name: string;
-}
-
-export interface TextChoice {
-  text: string;
-  finish_reason: string;
-  index: number;
-}
-
 // Can be dynamic e.g. APIKEY_HEADER_ + name
 export type AuthTypeString = AuthType | string;
 
@@ -126,6 +44,7 @@ export type Leaf = {
   authentication?: {
     [name: AuthTypeString]: Authentication;
   };
+  description?: string;
   // The current pathname of this endpoint, which may be static or parameterised
   pathname: string;
   // Methods such as GET, POST and schema values for requests
@@ -173,6 +92,8 @@ export type Endpoint = {
   parts: Parts;
   // Data for this endpoint
   data: Leaf;
+  // Natural language description of the endpoint
+  description?: string;
 };
 
 export type TokenCounts = {
@@ -191,38 +112,3 @@ export type RouterMap = { [host: string]: Router };
 export type LeafMap = { [host: string]: Record<string, RouteData> };
 
 export type EndpointsByHost = Array<{ endpoints: Endpoint[]; host: string }>;
-export type OverlengthEndpoints = Array<{ endpoints: Endpoint[]}>;
-export type InfoToDescribe = {
-
-
-
-  methods: {
-    [method: string]: {
-      // Requests may not contain a body
-      request?: {
-        // mediaType is a a mime type such as application/json
-        [mediaType: string]: {
-          body?: Schema;
-          // Sample of the most recent request
-          mostRecent?: unknown;
-        };
-      };
-      requestHeaders?: Schema;
-      response: {
-        [statusCode: string]: {
-          [mediaType: string]: {
-            body?: Schema;
-            // Sample of the most recent response
-            mostRecent?: unknown;
-          };
-        };
-      };
-      responseHeaders?: Schema;
-      queryParameters?: Schema;
-    };
-  };
-
-
-
-
-}

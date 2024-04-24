@@ -4,7 +4,7 @@ import { RedocStandalone } from "redoc";
 import type RequestStore from "../lib/RequestStore";
 import requestStore from "./helpers/request-store";
 import { safelyGetURLHost } from "../utils/helpers";
-import { EndpointsByHost, Endpoint, Status, OverlengthEndpoints, TokenCounts} from "../utils/types"; //defaultParams
+import { EndpointsByHost, Endpoint, Status, TokenCounts} from "../utils/types"; //defaultParams
 import Context from "./context";
 import Control from "./Control";
 import Start from "./Start";
@@ -13,6 +13,7 @@ import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
 import { isEmpty } from "lodash";
 import countTokens from "./helpers/count-tokens";
+import { describeApiEndpoint } from "../lib/describe-endpoints";
 
 
 function Main() {
@@ -22,9 +23,8 @@ function Main() {
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
   const [endpointTokenCounts, setEndpointTokenCounts] = useState({});
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
-  const [overlengthEndpoints, setOverlengthEndpoints] = useState<OverlengthEndpoints>([]);
 
-  const [endpointDescriptions, setEndpointDescriptions] = useState({});
+  const [endpointDescriptions, setEndpointDescriptions] = useState<Record<string, string>>({});
 
   const [allHosts, setAllHosts] = useState<Set<string>>(new Set());
   const [disabledHosts, setDisabledHosts] = useState<Set<string>>(new Set());
@@ -42,9 +42,14 @@ function Main() {
               const contentStr = content || '';
               const wasInserted = requestStore.insert(harRequest, contentStr);
               if (!wasInserted) return;
-              setSpecEndpoints();
-              fetchTokenCounts();
               const host = safelyGetURLHost(harRequest.request.url);
+              const path = new URL(harRequest.request.url).pathname;
+              const id = `${host}${path}`;
+
+              if (!requestStore.getEndpointDescriptions()[id]) {
+                setSpecEndpoints();
+              }
+              fetchTokenCounts();
               if (host && !allHosts.has(host)) {
                 setAllHosts((prev) => new Set(prev).add(host));
               }
@@ -56,7 +61,7 @@ function Main() {
           return;
         }
       }
-
+  
       getCurrentTab();
     },
     []
@@ -75,7 +80,6 @@ function Main() {
   const fetchTokenCounts = useCallback(async () => {
     const currentEndpoints = requestStore.endpoints();
       setEndpoints(currentEndpoints);
-      // Compute and set token counts for each endpoint
       const newTokenCounts: TokenCounts = {};
       for (const endpoint of currentEndpoints) {
         const identifier = getEndpointIdentifier(endpoint);
@@ -85,22 +89,24 @@ function Main() {
 
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
+    const updatedEndpoints = mergeDescriptions(nextEndpoints);
+    setEndpoints(sortEndpoints(updatedEndpoints));
+    setSpec(endpointsToOAI31(updatedEndpoints, requestStore.options()).getSpec());
+  }, []);
 
-    setSpec(endpointsToOAI31(nextEndpoints, requestStore.options()).getSpec());
-    setEndpoints(sortEndpoints(nextEndpoints));
-  }, [selectedEndpoints]);
+  const mergeDescriptions = (endpoints: Array<Endpoint>): Array<Endpoint> => {
+    const descriptions = requestStore.getEndpointDescriptions();
+    return endpoints.map(endpoint => {
+      const id = getEndpointIdentifier(endpoint);
+      return descriptions[id] ? { ...endpoint, description: descriptions[id] } : endpoint;
+    });
+  };
 
   useEffect(() => {
     requestStore.setDisabledHosts(disabledHosts);
+    requestStore.setEndpointDescriptions(endpointDescriptions);
     setSpecEndpoints();
-  }, [disabledHosts]);
-
-  useEffect(() => {
-    const filteredEndpoints = requestStore.endpoints().filter(endpoint => 
-      selectedEndpoints.has(getEndpointIdentifier(endpoint))
-    );
-    console.log('Filtered endpoints:', filteredEndpoints)
-  }, [selectedEndpoints]);
+  }, [disabledHosts, endpointDescriptions]);
 
   useEffect(() => {
     switch (status) {
@@ -108,10 +114,13 @@ function Main() {
         chrome.devtools.network.onRequestFinished.removeListener(
           requestFinishedHandler
         );
+        const tempEndpointDescriptions = requestStore.getEndpointDescriptions()
         requestStore.clear();
+        setEndpointDescriptions(tempEndpointDescriptions)
         setSpec(null);
         setAllHosts(new Set());
         setDisabledHosts(new Set());
+        
         break;
       case Status.STOPPED:
         chrome.devtools.network.onRequestFinished.removeListener(
@@ -152,24 +161,34 @@ function Main() {
 
   const importFn = useCallback((json: string) => {
     const result = requestStore.import(json);
+
     setSpecEndpoints();
     setAllHosts(new Set(requestStore.hosts()));
     return result;
   }, []);
 
-  const describeSelectedEndpoints = async (selectedEndpoints: Set<string>) => {
 
+  const describeSelectedEndpoints = async (selectedEndpoints: Set<string>) => {
     const descriptions: Record<string, string> = {};
+  
     for (const id of selectedEndpoints) {
       const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
       if (endpoint) {
-        //const description = await describeApiEndpoint(endpoint,  defaultParams, 'gpt4'); // Assuming defaultParams is defined
-        //console.log('Description:', description)
-        descriptions[id] = 'description.test';
+        const description = await describeApiEndpoint(endpoint, 'gpt-4');
+        if (description !== null) {
+          descriptions[id] = description;
+        }
       }
     }
-    setEndpointDescriptions(descriptions); // Update the state with new descriptions
+  
+    setEndpointDescriptions(descriptions);
+    requestStore.setEndpointDescriptions(descriptions);
+    setSpecEndpoints();
   };
+
+  useEffect(() => {
+    setSpec(endpointsToOAI31(endpoints, requestStore.options()).getSpec());
+  }, [endpoints, requestStore.getEndpointDescriptions()]);
 
 
   if (status === Status.INIT) {
@@ -191,9 +210,7 @@ function Main() {
         import: importFn,
         options: requestStore.options,
         selectedEndpoints, 
-        setSelectedEndpoints, 
-        overlengthEndpoints, 
-        setOverlengthEndpoints,
+        setSelectedEndpoints,
         endpointTokenCounts,
         describeSelectedEndpoints,
         endpointDescriptions,
@@ -202,7 +219,7 @@ function Main() {
       <div className={classes.wrapper}>
         <Control start={start} stop={stop} clear={clear} status={status} />
         <RedocStandalone
-          spec={spec || {}}
+          spec= {spec || {}} //endpointsToOAI31(endpoints, requestStore.options()).getSpec()
           options={{
             hideHostname: true,
             sortEnumValuesAlphabetically: true,
@@ -222,3 +239,4 @@ function Main() {
 }
 
 export default Main;
+

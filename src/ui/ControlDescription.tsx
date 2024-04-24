@@ -19,7 +19,6 @@ import { Endpoint } from "../utils/types"
 import Context from "./context";
 //import AutoSizer from "react-virtualized-auto-sizer";
 import classes from "./controlDynamic.module.css";
-import callOpenAI from '../lib/endpoint-describe'
 
 interface EndpointsByHost {
   [host: string]: Endpoint[];
@@ -43,21 +42,14 @@ const ControlDescription = () => {
   // Handler to update local storage when the API key changes
   const handleApiKeyChange = (newApiKey: string) => {
     localStorage.setItem('OPENAI_API_KEY', newApiKey);
-    console.log('API KEY FROM LOCAL STORAGE:', localStorage.getItem('OPENAI_API_KEY'));
     setApiKey(newApiKey);
   };
-
-
-
-  // Assuming that context.selectedEndpoints is an array or a Set of selected endpoint identifiers.
-  // const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
 
   // This will be an array of strings representing the values of the selected checkboxes
   const selectedEndpoints: string[] = Array.from(context.selectedEndpoints);
 
   const onCheckboxChange = (value: string) => {
     // Create a new Set from the existing one
-    callOpenAI('Testing OpenAI', 'gpt-4')
     const newSelectedEndpoints = new Set(selectedEndpoints);
     if (newSelectedEndpoints.has(value)) {
       newSelectedEndpoints.delete(value);
@@ -129,7 +121,7 @@ const ControlDescription = () => {
                       value={Array.from(context.selectedEndpoints)}
                       onChange={(values) => context.setSelectedEndpoints(new Set(values.map(value => String(value))))}
                     >
-                      <VStack align="stretch" spacing={4}> {/* Adjust 'spacing' as needed */}
+                      <VStack align="stretch" spacing={4}>
                         {endpoints.map((endpoint) => {
                           const endpointKey = `${endpoint.host}${endpoint.pathname}`
                           const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
@@ -151,7 +143,7 @@ const ControlDescription = () => {
             ))}
           </Accordion>
           <Button
-            mt={4} // Margin top for spacing
+            mt={4}
             colorScheme="blue"
             isDisabled={context.selectedEndpoints.size === 0}
             onClick={handleDescribeEndpoints}

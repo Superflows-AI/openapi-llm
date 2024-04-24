@@ -27,12 +27,14 @@ export default class RequestStore {
   private store: RouterMap;
   private leafMap: LeafMap;
   private disabledHosts: Set<string>;
+  public endpointDescriptions: Record<string, string>;
   private storeOptions: Options;
 
   constructor(storeOptions = persistOptions.get()) {
     this.leafMap = {};
     this.store = {};
     this.disabledHosts = new Set();
+    this.endpointDescriptions = {};
     this.storeOptions = storeOptions;
   }
 
@@ -45,8 +47,9 @@ export default class RequestStore {
 
   public import(json: string): boolean {
     try {
-      const { leafMap, disabledHosts } = JSON.parse(json);
+      const { leafMap, disabledHosts, endpointDescriptions } = JSON.parse(json);
       this.disabledHosts = new Set(disabledHosts);
+      this.endpointDescriptions = endpointDescriptions;
       this.store = leafMapToRouterMap(leafMap);
       this.leafMap = leafMap;
       return true;
@@ -59,6 +62,7 @@ export default class RequestStore {
     return stringify({
       leafMap: this.leafMap,
       disabledHosts: Array.from(this.disabledHosts),
+      endpointDescriptions: this.endpointDescriptions,
     }).trim();
   };
 
@@ -73,7 +77,19 @@ export default class RequestStore {
       this.leafMap,
       Array.from(this.disabledHosts)
     ) as Readonly<typeof this.leafMap>;
-    return leafMapToEndpoints(withoutDisabled);
+  
+    // Get the endpoint descriptions
+    const descriptions = this.endpointDescriptions;
+  
+    // Map the leafMap to an array of endpoints, including descriptions
+    return leafMapToEndpoints(withoutDisabled).map(endpoint => {
+      const id = `${endpoint.host}${endpoint.pathname}`;
+      const description = descriptions[id];
+      return {
+        ...endpoint,
+        description,
+      };
+    });
   }
 
   public get(): Readonly<RouterMap> {
@@ -98,18 +114,27 @@ export default class RequestStore {
     });
     if (!result) return false;
     const { insertedPath, insertedLeaf, insertedHost } = result;
+  
+    // Get the existing description for the inserted path
+    const description = this.endpointDescriptions[`${insertedHost}${insertedPath}`];
+  
     insertLeafMap({
       leafMap: this.leafMap,
       host: insertedHost,
-      leaf: insertedLeaf,
+      leaf: { ...insertedLeaf, description },
       path: insertedPath,
     });
+  
     let pathname = insertedPath;
     for (const idx of fastPathParameterIndices(pathname)) {
       const newPathname = this.parameterise(idx, pathname, insertedHost);
       if (newPathname) pathname = newPathname;
     }
     return true;
+  }
+
+  public getEndpointDescriptions(): Record<string, string> {
+    return this.endpointDescriptions;
   }
 
   public parameterise(
@@ -122,13 +147,26 @@ export default class RequestStore {
     const { removedPaths, insertedPath, insertedLeaf } = result;
     const unsetLeafMap = (path: string) => unset(this.leafMap[host], path);
     removedPaths.concat([path]).forEach(unsetLeafMap);
+  
+    // Update the endpointDescriptions object with the description for the inserted path
+    const oldDescription = this.endpointDescriptions[`${host}${path}`];
+    if (oldDescription) {
+      this.endpointDescriptions[`${host}${insertedPath}`] = oldDescription;
+      delete this.endpointDescriptions[`${host}${path}`];
+    }
+  
     insertLeafMap({
       leafMap: this.leafMap,
       host,
       leaf: insertedLeaf,
       path: insertedPath,
     });
+  
     return insertedPath;
+  }
+
+  public setEndpointDescriptions(endpointDescriptions: Record<string, string>): void {
+    this.endpointDescriptions = endpointDescriptions;
   }
 
   public setDisabledHosts(disabledHosts: Set<string>): void {
