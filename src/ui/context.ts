@@ -15,11 +15,17 @@ type ContextType = {
   import: typeof RequestStore.prototype.import;
   export: typeof RequestStore.prototype.export;
   options: typeof RequestStore.prototype.options;
-  selectedEndpoints: Set<string>; // Added state for selected endpoints
-  setSelectedEndpoints: (selectedEndpoints: Set<string>) => void; // Function to update the selected endpoints
-  endpointTokenCounts: TokenCounts
+  selectedEndpoints: Set<string>;
+  setSelectedEndpoints: (selectedEndpoints: Set<string>) => void;
+  endpointTokenCounts: TokenCounts;
   describeSelectedEndpoints: (selectedEndpoints: Set<string>) => void;
-  endpointDescriptions: { [endpointId: string]: string }
+  endpointDescriptions: { [endpointId: string]: string };
+  requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
+  setRequestBodySchemaParamDescriptions: (requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>) => void;
+  responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
+  setResponseBodySchemaParamDescriptions: (responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>) => void;
+  requestHeaderParamDescriptions: Record<string, Record<string, string | null>>;
+  setRequestHeaderParamDescriptions: (requestHeaderParamDescriptions: Record<string, Record<string, string | null>>) => void;
 };
 
 const defaultContextValue: ContextType = {
@@ -34,13 +40,18 @@ const defaultContextValue: ContextType = {
   import: () => false,
   export: () => "",
   options: () => defaultOptions,
-  selectedEndpoints: new Set(), // Initialize with an empty set
-  setSelectedEndpoints: () => {}, // Placeholder function
+  selectedEndpoints: new Set(),
+  setSelectedEndpoints: () => {},
   endpointTokenCounts: {},
   describeSelectedEndpoints: () => {},
-  endpointDescriptions: {}
+  endpointDescriptions: {},
+  requestBodySchemaParamDescriptions: {},
+  setRequestBodySchemaParamDescriptions: () => {},
+  responseBodySchemaParamDescriptions: {},
+  setResponseBodySchemaParamDescriptions: () => {},
+  requestHeaderParamDescriptions: {},
+  setRequestHeaderParamDescriptions: () => {},
 };
-
 const Context = createContext<ContextType>(defaultContextValue);
 
 export default Context;

@@ -13,7 +13,7 @@ import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
 import { isEmpty } from "lodash";
 import countTokens from "./helpers/count-tokens";
-import { describeApiEndpoint } from "../lib/describe-endpoints";
+import { describeApiEndpoint, describeRequestBodySchemaParameters, describeRequestHeaders, describeResponseBodySchemaParameters } from "../lib/describe-endpoints";
 
 
 function Main() {
@@ -25,6 +25,9 @@ function Main() {
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
 
   const [endpointDescriptions, setEndpointDescriptions] = useState<Record<string, string>>({});
+  const [requestBodySchemaParamDescriptions, setRequestBodySchemaParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
+  const [responseBodySchemaParamDescriptions, setResponseBodySchemaParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
+  const [requestHeaderParamDescriptions, setRequestHeaderParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
 
   const [allHosts, setAllHosts] = useState<Set<string>>(new Set());
   const [disabledHosts, setDisabledHosts] = useState<Set<string>>(new Set());
@@ -91,16 +94,107 @@ function Main() {
     const nextEndpoints = requestStore.endpoints();
     const updatedEndpoints = mergeDescriptions(nextEndpoints);
     setEndpoints(sortEndpoints(updatedEndpoints));
-    setSpec(endpointsToOAI31(updatedEndpoints, requestStore.options()).getSpec());
+    setSpec(
+      endpointsToOAI31(
+        updatedEndpoints,
+        requestStore.options(),
+        requestStore.requestBodySchemaParamDescriptions,
+        requestStore.responseBodySchemaParamDescriptions,
+        requestStore.requestHeaderParamDescriptions
+      ).getSpec()
+    );
   }, []);
+
 
   const mergeDescriptions = (endpoints: Array<Endpoint>): Array<Endpoint> => {
     const descriptions = requestStore.getEndpointDescriptions();
+    const requestBodySchemaParamDescriptions = requestStore.requestBodySchemaParamDescriptions;
+    const responseBodySchemaParamDescriptions = requestStore.responseBodySchemaParamDescriptions;
+    const requestHeaderParamDescriptions = requestStore.requestHeaderParamDescriptions;
+
+    console.log('IN MERGE DESCRIPTIONS');
+    console.log('requestBodySchemaParamDescriptions', requestBodySchemaParamDescriptions);
+    console.log('responseBodySchemaParamDescriptions', responseBodySchemaParamDescriptions);
+    console.log('requestHeaderParamDescriptions', requestHeaderParamDescriptions);
+
+    const mergeParamDescriptions = (
+      obj: Record<string, any>,
+      paramDescriptions: Record<string, Record<string, string | null>>
+    ): Record<string, any> => {
+
+      const mergedParams: Record<string, any> = JSON.parse(JSON.stringify(obj)); // Deep copy of obj
+    
+      // Iterate over each endpoint's parameter descriptions by getting it's endpoint ID
+      Object.keys(paramDescriptions).forEach(endpointId => {
+        console.log('Endpoint ID', endpointId)
+
+        // Iterate over each param description for each endpoint ID
+        Object.keys(paramDescriptions[endpointId]).forEach(paramPath => {
+
+          const pathParts = paramPath.split('|');
+
+          const methodType = pathParts[0].toUpperCase();
+
+          
+
+          // If the method type exists, enter function
+          if (mergedParams[methodType]) {
+            let currentLevel = mergedParams[methodType];
+
+            for (let i = 1; i < pathParts.length - 1; i++) {
+              const part = pathParts[i];
+              if (!currentLevel[part]) {
+                currentLevel[part] = {};
+              }
+              currentLevel = currentLevel[part];
+            }
+            
+            const paramName = pathParts[pathParts.length - 1];
+
+            currentLevel[paramName] = {
+              ...currentLevel[paramName],
+              description: paramDescriptions[endpointId][paramPath]
+            };
+          }
+        });
+      });
+      console.log('Merged Params');
+      return mergedParams;
+    };
+
     return endpoints.map(endpoint => {
       const id = getEndpointIdentifier(endpoint);
-      return descriptions[id] ? { ...endpoint, description: descriptions[id] } : endpoint;
+
+      const description = descriptions[id] || "";
+
+      if (description) {
+
+      const mergedMethods = mergeParamDescriptions(
+        endpoint.data.methods,
+        {
+          ...requestBodySchemaParamDescriptions,
+          // ...responseBodySchemaParamDescriptions,
+          // ...requestHeaderParamDescriptions
+        }
+      );
+
+      console.log('endpoint:', endpoint);
+      console.log('mergedMethods:', mergedMethods);
+
+      return {
+        ...endpoint,
+        description,
+        data: {
+          ...endpoint.data,
+          methods: mergedMethods
+        }
+      };
+     } else { 
+      return endpoint 
+    };
     });
   };
+
 
   useEffect(() => {
     requestStore.setDisabledHosts(disabledHosts);
@@ -170,6 +264,9 @@ function Main() {
 
   const describeSelectedEndpoints = async (selectedEndpoints: Set<string>) => {
     const descriptions: Record<string, string> = {};
+    const requestBodySchemaParams: Record<string, Record<string, string | null>> = {};
+    const responseBodySchemaParams: Record<string, Record<string, string | null>> = {};
+    const requestHeaderParams: Record<string, Record<string, string | null>> = {};
   
     for (const id of selectedEndpoints) {
       const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
@@ -178,18 +275,35 @@ function Main() {
         if (description !== null) {
           descriptions[id] = description;
         }
+        requestBodySchemaParams[id] = await describeRequestBodySchemaParameters(endpoint, 'gpt-4');
+        responseBodySchemaParams[id] = await describeResponseBodySchemaParameters(endpoint, 'gpt-4');
+        requestHeaderParams[id] = await describeRequestHeaders(endpoint, 'gpt-4');
       }
     }
   
     setEndpointDescriptions(descriptions);
+    setRequestBodySchemaParamDescriptions(requestBodySchemaParams)
+    setResponseBodySchemaParamDescriptions(responseBodySchemaParams)
+    setRequestHeaderParamDescriptions(requestHeaderParams)
     requestStore.setEndpointDescriptions(descriptions);
+    requestStore.setRequestBodySchemaParamDescriptions(requestBodySchemaParams);
+    requestStore.setResponseBodySchemaParamDescriptions(responseBodySchemaParams);
+    requestStore.setRequestHeaderParamDescriptions(requestHeaderParams);
     setSpecEndpoints();
+    console.log('SPEC AFTER DESCRIPTION OF PARAMS', spec)
   };
 
   useEffect(() => {
-    setSpec(endpointsToOAI31(endpoints, requestStore.options()).getSpec());
+    setSpec(
+      endpointsToOAI31(
+        endpoints,
+        requestStore.options(),
+        requestStore.requestBodySchemaParamDescriptions,
+        requestStore.responseBodySchemaParamDescriptions,
+        requestStore.requestHeaderParamDescriptions
+      ).getSpec()
+    );
   }, [endpoints, requestStore.getEndpointDescriptions()]);
-
 
   if (status === Status.INIT) {
     return <Start start={start} />;
@@ -214,6 +328,12 @@ function Main() {
         endpointTokenCounts,
         describeSelectedEndpoints,
         endpointDescriptions,
+        requestBodySchemaParamDescriptions,
+        setRequestBodySchemaParamDescriptions,
+        responseBodySchemaParamDescriptions,
+        setResponseBodySchemaParamDescriptions,
+        requestHeaderParamDescriptions,
+        setRequestHeaderParamDescriptions,
       }}
     >
       <div className={classes.wrapper}>

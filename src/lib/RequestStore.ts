@@ -28,6 +28,9 @@ export default class RequestStore {
   private leafMap: LeafMap;
   private disabledHosts: Set<string>;
   public endpointDescriptions: Record<string, string>;
+  public requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
+  public responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
+  public requestHeaderParamDescriptions: Record<string, Record<string, string | null>>;
   private storeOptions: Options;
 
   constructor(storeOptions = persistOptions.get()) {
@@ -35,6 +38,9 @@ export default class RequestStore {
     this.store = {};
     this.disabledHosts = new Set();
     this.endpointDescriptions = {};
+    this.requestBodySchemaParamDescriptions = {};
+    this.responseBodySchemaParamDescriptions = {};
+    this.requestHeaderParamDescriptions = {};
     this.storeOptions = storeOptions;
   }
 
@@ -47,9 +53,12 @@ export default class RequestStore {
 
   public import(json: string): boolean {
     try {
-      const { leafMap, disabledHosts, endpointDescriptions } = JSON.parse(json);
+      const { leafMap, disabledHosts, endpointDescriptions, requestBodySchemaParamDescriptions, responseBodySchemaParamDescriptions, requestHeaderParamDescriptions } = JSON.parse(json);
       this.disabledHosts = new Set(disabledHosts);
       this.endpointDescriptions = endpointDescriptions;
+      this.requestBodySchemaParamDescriptions = requestBodySchemaParamDescriptions;
+      this.responseBodySchemaParamDescriptions = responseBodySchemaParamDescriptions;
+      this.requestHeaderParamDescriptions = requestHeaderParamDescriptions;
       this.store = leafMapToRouterMap(leafMap);
       this.leafMap = leafMap;
       return true;
@@ -63,6 +72,9 @@ export default class RequestStore {
       leafMap: this.leafMap,
       disabledHosts: Array.from(this.disabledHosts),
       endpointDescriptions: this.endpointDescriptions,
+      requestBodySchemaParamDescriptions: this.requestBodySchemaParamDescriptions,
+      responseBodySchemaParamDescriptions: this.responseBodySchemaParamDescriptions,
+      requestHeaderParamDescriptions: this.requestHeaderParamDescriptions,
     }).trim();
   };
 
@@ -133,10 +145,6 @@ export default class RequestStore {
     return true;
   }
 
-  public getEndpointDescriptions(): Record<string, string> {
-    return this.endpointDescriptions;
-  }
-
   public parameterise(
     index: number,
     path: string,
@@ -169,7 +177,36 @@ export default class RequestStore {
     this.endpointDescriptions = endpointDescriptions;
   }
 
+  public getEndpointDescriptions(): Record<string, string> {
+    return this.endpointDescriptions;
+  }
+
   public setDisabledHosts(disabledHosts: Set<string>): void {
     this.disabledHosts = disabledHosts;
   }
+
+  public setRequestBodySchemaParamDescriptions(descriptions: Record<string, Record<string, string | null>>): void {
+    this.requestBodySchemaParamDescriptions = descriptions;
+  }
+
+  public getRequestBodySchemaParamDescriptions(): Record<string, Record<string, string | null>> {
+    return this.requestBodySchemaParamDescriptions;
+  }
+  
+  public setResponseBodySchemaParamDescriptions(descriptions: Record<string, Record<string, string | null>>): void {
+    this.responseBodySchemaParamDescriptions = descriptions;
+  }
+
+  public getResponseBodySchemaParamDescriptions(): Record<string, Record<string, string | null>> {
+    return this.responseBodySchemaParamDescriptions;
+  }
+
+  public setRequestHeaderParamDescriptions(descriptions: Record<string, Record<string, string | null>>): void {
+    this.requestHeaderParamDescriptions = descriptions;
+  }
+
+  public getRequestHeaderParamDescriptions(): Record<string, Record<string, string | null>> {
+    return this.requestHeaderParamDescriptions;
+  }
+
 }

@@ -47,15 +47,27 @@ export const shouldIncludeRequestBody = (method: string) => {
 };
 
 type RequestType = Leaf["methods"]["get"]["request"];
+
 export const createRequestTypes = (
   requestType: RequestType,
   options: Options,
+  requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>,
+  endpointId: string
 ) => {
   if (!requestType) return;
   const contentObject: ContentObject = {};
   Object.entries(requestType).forEach(([mediaType, data]) => {
     const mediaTypeObject: MediaTypeObject = {
-      schema: data.body,
+      schema: data.body ? {
+        ...data.body,
+        properties: Object.entries(data.body.properties || {}).reduce((acc: Record<string, any>, [propName, propSchema]) => {
+          acc[propName] = {
+            ...propSchema,
+            description: requestBodySchemaParamDescriptions[endpointId]?.[propName],
+          };
+          return acc;
+        }, {}),
+      } : undefined,
       ...(!!options.enableMoreInfo && { example: data.mostRecent }),
     };
     contentObject[mediaType] = mediaTypeObject;
@@ -67,13 +79,16 @@ export const createRequestTypes = (
 };
 
 type ResponseType = Leaf["methods"]["get"]["response"];
+
+
 export const createResponseTypes = (
   responseType: ResponseType,
   headers: Schema | undefined,
   options: Options,
-  endpointDescription?: string, 
+  endpointDescription?: string,
+  responseBodySchemaParamDescriptions?: Record<string, Record<string, string | null>>,
+  endpointId?: string
 ) => {
-
   // Create response headers
   const headersObject: HeadersObject = {};
   if (headers && headers.properties) {
@@ -94,13 +109,22 @@ export const createResponseTypes = (
     Object.entries(mediaTypeObj).forEach(([mediaType, data]) => {
       const contentObject: ContentObject = {};
       const mediaTypeObject: MediaTypeObject = {
-        schema: data.body,
+        schema: data.body ? {
+          ...data.body,
+          properties: Object.entries(data.body.properties || {}).reduce((acc: Record<string, any>, [propName, propSchema]) => {
+            acc[propName] = {
+              ...propSchema,
+              description: responseBodySchemaParamDescriptions && endpointId ? responseBodySchemaParamDescriptions[endpointId]?.[propName] : undefined,
+            };
+            return acc;
+          }, {}),
+        } : undefined,
         ...(!!options.enableMoreInfo && { example: data.mostRecent }),
       };
       contentObject[mediaType] = mediaTypeObject;
       const responseObject: ResponseObject = {
         content: contentObject,
-        description: endpointDescription || "", 
+        description: endpointDescription || "",
         headers: headersObject,
       };
       responsesObject[statusCode] = responseObject;
@@ -146,6 +170,8 @@ export const createPathParameterTypes = (
 
 export const createQueryParameterTypes = (
   queryParameters: Schema | undefined,
+  requestHeaderSchemaParamDescriptions: Record<string, Record<string, string | null>>,
+  endpointId: string
 ): Array<ParameterObject> => {
   if (!queryParameters?.properties) return [];
   const namesAndSchemas = Object.entries(queryParameters.properties);
@@ -155,6 +181,7 @@ export const createQueryParameterTypes = (
       in: "query",
       required: false,
       schema,
+      description: requestHeaderSchemaParamDescriptions[endpointId]?.[name] || undefined,
     };
     return parameterObject;
   });
