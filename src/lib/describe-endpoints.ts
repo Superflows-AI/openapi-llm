@@ -1,6 +1,7 @@
 import { Endpoint } from "../utils/types"; //, Leaf, PartType }
-import { methodDetailsToString, schemaToString } from "../ui/helpers/endpoint-parsers" //
+import { methodDetailsToString, schemaToString } from "./description-helpers/endpoint-parsers" //
 import { ChatMessage } from "../ui/helpers/count-tokens";
+import { endpointDescriptionPrompt, parameterDescriptionPrompt } from "./description-helpers/prompts";
 import tokenizer from "gpt-tokenizer";
 import callOpenAI from "./callOpenAI";
 
@@ -9,13 +10,16 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
     .map(([method, details]) => `${method.toUpperCase()}: ` + methodDetailsToString(details))
     .join('\n');
 
-  let endpointPrompt = `Concisely describe the functionality of this API endpoint in 1 sentence. Aim for at most 20 words. Give an overview information you need to use the endpoint. Here is an example request and response: ${methodsString}.`;
-  console.log('Endpoint Prompt', endpointPrompt[0], model);
- 
+  let endpointPrompt = endpointDescriptionPrompt(methodsString);
+
   try {
     const endpointDescription = await callOpenAI(endpointPrompt, model);
     if (endpointDescription.choices && endpointDescription.choices.length > 0 && endpointDescription.choices[0].message) {
-      return endpointDescription.choices[0].message.content;
+      
+      const content = endpointDescription.choices[0].message.content;
+      const capContent = capitalizeFirstLetter(content);
+      
+      return capContent;
     } else {
       console.warn('Unexpected OpenAI response format:', endpointDescription);
       return null;
@@ -29,7 +33,6 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
 export async function describeRequestBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
   const mostRecentExamples: Record<string, any> = {};
-  console.log(endpointDescription[0], model)
 
   async function traverseSchema(schema: any, parentPath: string) {
     if (schema.type === 'object') {
@@ -59,15 +62,14 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
 
       try {
         const example = mostRecentExamples[parentPath];
-
-        const paramPrompt = `You are explaining how a request body parameter inside an API endpoint with is used. The endpoint has description: ${endpointDescription}.
-        The parameter has path '${parentPath}' and type '${schemaToString(schema)}'. Here is an example usage: ${example}. Give a short, concise description of the parameter in 1 sentence under 20 words.
-        `
+        const schemaPrompt = schemaToString(schema);
+        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaPrompt, example);
 
         const paramDescription = await callOpenAI(paramPrompt, model);
         if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          parameterDescriptions[parentPath] = paramDescription.choices[0].message.content;
-          console.log(`Description of '${parentPath}':`, parameterDescriptions[parentPath])
+          const content = paramDescription.choices[0].message.content;
+          const capContent = capitalizeFirstLetter(content);
+          parameterDescriptions[parentPath] = capContent;
         } else {
           console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
           parameterDescriptions[parentPath] = null;
@@ -97,7 +99,6 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
 export async function describeResponseBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
   const mostRecentExamples: Record<string, any> = {};
-  console.log(endpointDescription)
 
   async function traverseSchema(schema: any, parentPath: string) {
     if (schema.type === 'object') {
@@ -127,15 +128,14 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
 
       try {
         const example = mostRecentExamples[parentPath];
-
-        const paramPrompt = `You are explaining how a response body parameter inside an API endpoint with is used. The endpoint has description: ${endpointDescription}.
-        The parameter has path '${parentPath}' and type '${schemaToString(schema)}'. Here is an example usage: ${example}. Give a short, concise description of the parameter in 1 sentence under 20 words.
-        `
+        
+        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaToString(schema), example)
 
         const paramDescription = await callOpenAI(paramPrompt, model);
         if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          parameterDescriptions[parentPath] = paramDescription.choices[0].message.content;
-          console.log(`Description of '${parentPath}':`, parameterDescriptions[parentPath])
+          const content = paramDescription.choices[0].message.content;
+          const capContent = capitalizeFirstLetter(content);
+          parameterDescriptions[parentPath] = capContent;
         } else {
           console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
           parameterDescriptions[parentPath] = null;
@@ -233,19 +233,16 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
         traverseParameters(method.queryParameters, `${methodType}|queryParameters`);
       }
     }
-    console.log(parametersToDescribe);
     for (const { path, schema } of parametersToDescribe) {
       try {
         const example = mostRecentExamples[path];
-
-        const paramPrompt = `You are explaining how a query parameter inside an API endpoint is used. The endpoint has description: ${endpointDescription}.
-        The parameter has path '${path}' and type '${schemaToString(schema)}'. Here is an example usage: ${example}. Give a short, concise description of the parameter in 1 sentence under 20 words.
-        `
+        const paramPrompt = parameterDescriptionPrompt(endpointDescription, path, schemaToString(schema), example)
 
         const paramDescription = await callOpenAI(paramPrompt, model);
         if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          parameterDescriptions[path] = paramDescription.choices[0].message.content;
-          console.log(`Description of '${path}':`, parameterDescriptions[path])
+          const content = paramDescription.choices[0].message.content;
+          const capContent = capitalizeFirstLetter(content);
+          parameterDescriptions[path] = capContent;
         } else {
           console.warn(`Unexpected OpenAI response format for parameter '${path}':`, paramDescription);
           parameterDescriptions[path] = null;
@@ -313,4 +310,9 @@ function getParameterExample(endpoint: Endpoint, paramPath: string): any {
   }
 }
 
-
+function capitalizeFirstLetter(string: string | null): string | null {
+  if (string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+  return null;
+}

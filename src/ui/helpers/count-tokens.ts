@@ -1,5 +1,5 @@
 import { Endpoint } from "../../utils/types";
-import { endpointToString } from "./endpoint-parsers";
+import { endpointToString } from "../../lib/description-helpers/endpoint-parsers";
 import tokenizer from "gpt-tokenizer";
 
 export interface ChatMessage {
