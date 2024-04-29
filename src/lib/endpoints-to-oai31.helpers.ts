@@ -50,24 +50,13 @@ type RequestType = Leaf["methods"]["get"]["request"];
 
 export const createRequestTypes = (
   requestType: RequestType,
-  options: Options,
-  requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>,
-  endpointId: string
+  options: Options
 ) => {
   if (!requestType) return;
   const contentObject: ContentObject = {};
   Object.entries(requestType).forEach(([mediaType, data]) => {
     const mediaTypeObject: MediaTypeObject = {
-      schema: data.body ? {
-        ...data.body,
-        properties: Object.entries(data.body.properties || {}).reduce((acc: Record<string, any>, [propName, propSchema]) => {
-          acc[propName] = {
-            ...propSchema,
-            description: requestBodySchemaParamDescriptions[endpointId]?.[propName],
-          };
-          return acc;
-        }, {}),
-      } : undefined,
+      schema: data.body,
       ...(!!options.enableMoreInfo && { example: data.mostRecent }),
     };
     contentObject[mediaType] = mediaTypeObject;
@@ -85,22 +74,18 @@ export const createResponseTypes = (
   responseType: ResponseType,
   headers: Schema | undefined,
   options: Options,
-  endpointDescription?: string,
-  responseBodySchemaParamDescriptions?: Record<string, Record<string, string | null>>,
-  endpointId?: string
+  endpointDescription?: string
 ) => {
   // Create response headers
   const headersObject: HeadersObject = {};
   if (headers && headers.properties) {
-    if (headers.properties) {
-      Object.entries(headers.properties).forEach(([name, schema]) => {
-        const headerObj: HeaderObject = {
-          required: false,
-          schema,
-        };
-        headersObject[name] = headerObj;
-      });
-    }
+    Object.entries(headers.properties).forEach(([name, schema]) => {
+      const headerObj: HeaderObject = {
+        required: false,
+        schema,
+      };
+      headersObject[name] = headerObj;
+    });
   }
 
   // Initialise responses object, set response objects from status codes
@@ -109,16 +94,7 @@ export const createResponseTypes = (
     Object.entries(mediaTypeObj).forEach(([mediaType, data]) => {
       const contentObject: ContentObject = {};
       const mediaTypeObject: MediaTypeObject = {
-        schema: data.body ? {
-          ...data.body,
-          properties: Object.entries(data.body.properties || {}).reduce((acc: Record<string, any>, [propName, propSchema]) => {
-            acc[propName] = {
-              ...propSchema,
-              description: responseBodySchemaParamDescriptions && endpointId ? responseBodySchemaParamDescriptions[endpointId]?.[propName] : undefined,
-            };
-            return acc;
-          }, {}),
-        } : undefined,
+        schema: data.body,
         ...(!!options.enableMoreInfo && { example: data.mostRecent }),
       };
       contentObject[mediaType] = mediaTypeObject;
@@ -169,9 +145,7 @@ export const createPathParameterTypes = (
 };
 
 export const createQueryParameterTypes = (
-  queryParameters: Schema | undefined,
-  requestHeaderSchemaParamDescriptions: Record<string, Record<string, string | null>>,
-  endpointId: string
+  queryParameters: Schema | undefined
 ): Array<ParameterObject> => {
   if (!queryParameters?.properties) return [];
   const namesAndSchemas = Object.entries(queryParameters.properties);
@@ -181,7 +155,6 @@ export const createQueryParameterTypes = (
       in: "query",
       required: false,
       schema,
-      description: requestHeaderSchemaParamDescriptions[endpointId]?.[name] || undefined,
     };
     return parameterObject;
   });
