@@ -30,7 +30,7 @@ export default class RequestStore {
   public endpointDescriptions: Record<string, string>;
   public requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
   public responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
-  public requestHeaderParamDescriptions: Record<string, Record<string, string | null>>;
+  public queryParamDescriptions: Record<string, Record<string, string | null>>;
   private storeOptions: Options;
 
   constructor(storeOptions = persistOptions.get()) {
@@ -40,7 +40,7 @@ export default class RequestStore {
     this.endpointDescriptions = {};
     this.requestBodySchemaParamDescriptions = {};
     this.responseBodySchemaParamDescriptions = {};
-    this.requestHeaderParamDescriptions = {};
+    this.queryParamDescriptions = {};
     this.storeOptions = storeOptions;
   }
 
@@ -53,12 +53,12 @@ export default class RequestStore {
 
   public import(json: string): boolean {
     try {
-      const { leafMap, disabledHosts, endpointDescriptions, requestBodySchemaParamDescriptions, responseBodySchemaParamDescriptions, requestHeaderParamDescriptions } = JSON.parse(json);
+      const { leafMap, disabledHosts, endpointDescriptions, requestBodySchemaParamDescriptions, responseBodySchemaParamDescriptions, queryParamDescriptions } = JSON.parse(json); //requestHeaderParamDescriptions, 
       this.disabledHosts = new Set(disabledHosts);
       this.endpointDescriptions = endpointDescriptions;
       this.requestBodySchemaParamDescriptions = requestBodySchemaParamDescriptions;
       this.responseBodySchemaParamDescriptions = responseBodySchemaParamDescriptions;
-      this.requestHeaderParamDescriptions = requestHeaderParamDescriptions;
+      this.queryParamDescriptions = queryParamDescriptions;
       this.store = leafMapToRouterMap(leafMap);
       this.leafMap = leafMap;
       return true;
@@ -74,7 +74,7 @@ export default class RequestStore {
       endpointDescriptions: this.endpointDescriptions,
       requestBodySchemaParamDescriptions: this.requestBodySchemaParamDescriptions,
       responseBodySchemaParamDescriptions: this.responseBodySchemaParamDescriptions,
-      requestHeaderParamDescriptions: this.requestHeaderParamDescriptions,
+      queryParamDescriptions: this.queryParamDescriptions,
     }).trim();
   };
 
@@ -201,12 +201,13 @@ export default class RequestStore {
     return this.responseBodySchemaParamDescriptions;
   }
 
-  public setRequestHeaderParamDescriptions(descriptions: Record<string, Record<string, string | null>>): void {
-    this.requestHeaderParamDescriptions = descriptions;
+  public setQueryParamDescriptions(descriptions: Record<string, Record<string, string | null>>): void {
+    this.queryParamDescriptions = descriptions;
   }
 
-  public getRequestHeaderParamDescriptions(): Record<string, Record<string, string | null>> {
-    return this.requestHeaderParamDescriptions;
+  public getQueryParamDescriptions(): Record<string, Record<string, string | null>> {
+    return this.queryParamDescriptions;
   }
+
 
 }

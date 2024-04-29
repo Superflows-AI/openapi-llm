@@ -9,7 +9,6 @@ type Result = { [key: string]: any };
 export function methodDetailsToString(method: any): string {
 
   const requestString = method.request ? Object.entries(method.request as { [mediaType: string]: any }).map(([mediaType, req]) => {
-      //const bodyString = req.body ? schemaToString(req.body) : 'No body';
       const parsedRequest = JSON.stringify(findExamplesFromJSON(req.mostRecent))
       return `${mediaType}: Summarised Example Request: ${parsedRequest}`;
   }).join('\n') : 'No request info';
@@ -47,7 +46,7 @@ export function endpointToString(endpoint: Endpoint): string {
   return `Pathname: ${endpoint.pathname}\nParts: [${partsString}]\nMethods:\n${methodsString}`;
 }
 
-function findExamplesFromJSON(data: any, maxLength: number = 30, result: Result = {}, visited = new Set()): Result {
+export function findExamplesFromJSON(data: any, maxLength: number = 30, result: Result = {}, visited = new Set()): Result {
   if (data !== null && typeof data === 'object') {
     if (visited.has(data)) {
       return result;

@@ -24,8 +24,8 @@ type ContextType = {
   setRequestBodySchemaParamDescriptions: (requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>) => void;
   responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
   setResponseBodySchemaParamDescriptions: (responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>) => void;
-  requestHeaderParamDescriptions: Record<string, Record<string, string | null>>;
-  setRequestHeaderParamDescriptions: (requestHeaderParamDescriptions: Record<string, Record<string, string | null>>) => void;
+  queryParamDescriptions: Record<string, Record<string, string | null>>;
+  setQueryParamDescriptions: (queryParamDescriptions: Record<string, Record<string, string | null>>) => void;
 };
 
 const defaultContextValue: ContextType = {
@@ -49,8 +49,8 @@ const defaultContextValue: ContextType = {
   setRequestBodySchemaParamDescriptions: () => {},
   responseBodySchemaParamDescriptions: {},
   setResponseBodySchemaParamDescriptions: () => {},
-  requestHeaderParamDescriptions: {},
-  setRequestHeaderParamDescriptions: () => {},
+  queryParamDescriptions: {},
+  setQueryParamDescriptions: () => {},
 };
 const Context = createContext<ContextType>(defaultContextValue);
 
