@@ -27,7 +27,7 @@ interface EndpointsByHost {
 
 const ControlDescription = () => {
   const context = useContext(Context);
-  const [search, setSearch] = useState("");
+  //const [search, setSearch] = useState("");
   const [apiKey, setApiKey] = useState("");
   const toast = useToast();
 
@@ -88,60 +88,71 @@ const ControlDescription = () => {
     <>
       <VStack spacing={4}>
 
-      <Input
-          placeholder="Enter your OpenAI API Key. This is only ever stored locally."
-          value={apiKey}
-          onChange={(e) => handleApiKeyChange(e.target.value)}
-          className={classes.apiKeyInput}
-        />
-        <Input
-              placeholder="Search for endpoint..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={classes.search}
-            />
         <div className={classes.wrapper}>
           
           <Heading as="h2" size="md" marginBottom="1em" marginTop="1em">
             Select Endpoints for AI Description
           </Heading>
-          <Accordion allowMultiple>
-            {Object.entries(endpointsByHost).map(([host, endpoints]) => (
-              <AccordionItem key={host}>
-                <h2>
-                  <AccordionButton>
-                    <Box flex="1" textAlign="left">{host}</Box>
-                    <AccordionIcon />
-                  </AccordionButton>
-                </h2>
-                <AccordionPanel pb={4}>
-                  <div className={classes.wrapper}>
-                    <CheckboxGroup
-                      colorScheme="green"
-                      value={Array.from(context.selectedEndpoints)}
-                      onChange={(values) => context.setSelectedEndpoints(new Set(values.map(value => String(value))))}
-                    >
-                      <VStack align="stretch" spacing={4}>
-                        {endpoints.map((endpoint) => {
-                          const endpointKey = `${endpoint.host}${endpoint.pathname}`
-                          const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
-                          
-                          return (
-                          <Checkbox
-                            key={`${endpoint.host}${endpoint.pathname}`}
-                            value={`${endpoint.host}${endpoint.pathname}`}
-                            onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}`)}
-                          >
-                            {endpoint.pathname} | Tokens: {tokenCount}
-                          </Checkbox>)
-                        })}
-                      </VStack>
-                    </CheckboxGroup>
-                  </div>
-                </AccordionPanel>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <Heading as="h2" size="sm" marginBottom="1em" marginTop="1em">
+            Your OpenAI key is only ever stored locally
+          </Heading>
+          <Input
+            placeholder="Enter your OpenAI API Key. This is only ever stored locally."
+            value={apiKey}
+            onChange={(e) => handleApiKeyChange(e.target.value)}
+            className={classes.apiKeyInput}
+            marginBottom="1em"
+          />
+
+          {context.endpoints.length !== 0 && context.selectedEndpoints.size === 0 && (
+              <Text mt={2} color="gray.700" marginBottom="1em">
+                Identify and select endpoints to describe below, then click 'Describe Endpoints'.
+              </Text>
+            )}
+          {context.endpoints.length === 0 && (
+            <Text mt={2} color="gray.700" marginBottom="1em">
+              No endpoints found. Activate endpoints in browser to start describing them.
+            </Text>
+          )}
+            <Accordion allowMultiple>
+              {Object.entries(endpointsByHost).map(([host, endpoints]) => (
+                <AccordionItem key={host}>
+                  <h2>
+                    <AccordionButton>
+                      <Box flex="1" textAlign="left">{host}</Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                  </h2>
+                  <AccordionPanel pb={4}>
+                    <div className={classes.wrapper}>
+                      <CheckboxGroup
+                        colorScheme="green"
+                        value={Array.from(context.selectedEndpoints)}
+                        onChange={(values) =>
+                          context.setSelectedEndpoints(new Set(values.map(value => String(value))))
+                        }
+                      >
+                        <VStack align="stretch" spacing={4}>
+                          {endpoints.map((endpoint) => {
+                            const endpointKey = `${endpoint.host}${endpoint.pathname}`;
+                            const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
+                            return (
+                              <Checkbox
+                                key={`${endpoint.host}${endpoint.pathname}`}
+                                value={`${endpoint.host}${endpoint.pathname}`}
+                                onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}`)}
+                              >
+                                {endpoint.pathname} | Tokens: {tokenCount}
+                              </Checkbox>
+                            );
+                          })}
+                        </VStack>
+                      </CheckboxGroup>
+                    </div>
+                  </AccordionPanel>
+                </AccordionItem>
+              ))}
+            </Accordion>
           <Button
             mt={4}
             colorScheme="blue"
@@ -150,16 +161,8 @@ const ControlDescription = () => {
           >
             Describe Endpoints
           </Button>
-          </div>
-
-        {context.selectedEndpoints.size === 0 && (
-                    <Text mt={2} color="gray.500">
-                      Identify and select endpoints to describe.
-                    </Text>
-                  )}
-      
-        </VStack>
-
+        </div>
+      </VStack>
     </>
   );
 };
