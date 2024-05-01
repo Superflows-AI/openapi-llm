@@ -23,20 +23,9 @@ import { defaultOptions } from "./store-helpers/persist-options.js";
 import { AuthTypeString, Endpoint } from "../utils/types.js";
 
 
-// interface MediaTypeSchema {
-//   schema: {
-//     properties: Record<string, any>;
-//     [key: string]: any; // Additional properties of the schema
-//   };
-//   [key: string]: any; // Additional properties of the media type object
-// }
-
 const endpointsToOAI31 = (
   endpoints: Array<Endpoint>,
   options: Options = defaultOptions,
-  // requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>> = {},
-  // responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>> = {},
-  // requestHeaderSchemaParamDescriptions: Record<string, Record<string, string | null>> = {}
 ): OpenApiBuilder => {
   const builder = createBuilderAndDocRoot(endpoints);
   const uniqueHosts = new Set<string>();
@@ -60,12 +49,11 @@ const endpointsToOAI31 = (
       const methodLower = method.toLowerCase();
       const endpointMethod = endpoint.data.methods[method]!;
 
-      // const endpointId = `${endpoint.host}${endpoint.pathname}`;
 
       const queryParameterObjects = createQueryParameterTypes(
         endpointMethod.queryParameters
       );
-      
+
       const requestBody = createRequestTypes(
         endpointMethod.request,
         options
@@ -90,9 +78,6 @@ const endpointsToOAI31 = (
         responses,
         ...(security && { security }),
       };
-      // const requestBodyParamDescriptions = requestBodySchemaParamDescriptions[endpointId] || {};
-      // const responseBodyParamDescriptions = responseBodySchemaParamDescriptions[endpointId] || {};
-      // const requestHeaderParamDescriptions = requestHeaderSchemaParamDescriptions[endpointId] || {};
 
       const allParameterObjects = [
         ...pathParameterObjects,

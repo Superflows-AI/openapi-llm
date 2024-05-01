@@ -3,27 +3,35 @@ import { Endpoint } from "../../utils/types";
 import tokenizer from "gpt-tokenizer";
 import { ChatMessage } from "../../ui/helpers/count-tokens"; 
 
-type Result = { [key: string]: any };
+export type Result = { [key: string]: any };
 
 // Helper function to convert method details into a string
 export function methodDetailsToString(method: any): string {
 
-  const requestString = method.request ? Object.entries(method.request as { [mediaType: string]: any }).map(([mediaType, req]) => {
-      const parsedRequest = JSON.stringify(findExamplesFromJSON(req.mostRecent))
-      return `${mediaType}: Summarised Example Request: ${parsedRequest}`;
-  }).join('\n') : 'No request info';
+  //const queryString = 
 
-  const responseString = method.response ? Object.entries(method.response as { [statusCode: string]: { [mediaType: string]: any } }).map(([statusCode, responses]) => {
-    return `${statusCode}: ` + Object.entries(responses).map(([mediaType, res]) => {
-      const mostRecent = res.mostRecent ? JSON.stringify(findExamplesFromJSON(res.mostRecent)) : 'No recent sample';
-      return `${mediaType}: Summarised Example Response: ${mostRecent}`;
-    }).join('\n');
-  }).join('\n') : 'No response info';
+  const requestString = method.request
+    ? Object.entries(method.request as { [mediaType: string]: any }).map(([mediaType, req]) => {
+        const parsedRequest = req.mostRecent
+          ? JSON.stringify(findExamplesFromJSON(req.mostRecent))
+          : 'No recent example';
+        return `${mediaType}: Summarised Example Request: ${parsedRequest}`;
+      }).join('\n')
+    : 'No request info';
+
+  const responseString = method.response
+    ? Object.entries(method.response as { [statusCode: string]: { [mediaType: string]: any } }).map(([statusCode, responses]) => {
+        return `${statusCode}: ` + Object.entries(responses).map(([mediaType, res]) => {
+          const mostRecent = res.mostRecent
+            ? JSON.stringify(findExamplesFromJSON(res.mostRecent))
+            : 'No recent sample';
+          return `${mediaType}: Summarised Example Response: ${mostRecent}`;
+        }).join('\n');
+      }).join('\n')
+    : 'No response info';
 
   return `Request:\n${requestString}\nResponse:\n${responseString}`;
 }
-
-
 // Helper function to convert schema objects into a string representation
 export function schemaToString(schema: Schema): string {
   let schemaDetails = schema.type ? `Type: ${schema.type}` : '';
@@ -47,38 +55,41 @@ export function endpointToString(endpoint: Endpoint): string {
 }
 
 export function findExamplesFromJSON(data: any, maxLength: number = 30, result: Result = {}, visited = new Set()): Result {
+  if (typeof data === 'string') {
+    result['example'] = truncateString(data);
+    return result;
+  }
+
   if (data !== null && typeof data === 'object') {
     if (visited.has(data)) {
       return result;
     }
     visited.add(data);
 
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
-        const value = data[key];
-
-        if (Array.isArray(value)) {
-          result[key] = value.length > 0 ? [findExamplesFromJSON(value[0], maxLength, {}, visited)] : [];
-          result[key].push('... (' + (value.length - 1) + ' items not shown)');
-        } else if (typeof value === 'object' && value !== null) {
-          result[key] = findExamplesFromJSON(value, maxLength, {}, visited);
-        } else if (typeof value === 'string') {
-          const characterCount = value.length;
-
-          if (characterCount > maxLength) {
-            const chatMessages: ChatMessage[] = [{ role: "user", content: value }];
-            const tokens = tokenizer.encodeChat(chatMessages, "gpt-4");
-            const tokenCount = tokens.length;
-            const characterTokenRatio = characterCount / tokenCount;
-
-            if (characterTokenRatio < 2) {
-              const truncated = value.slice(0, maxLength) + '...';
-              result[key] = truncated;
-            } else {
-              result[key] = value;
-          }}
+    if (Array.isArray(data)) {
+      for (let i = 0; i < data.length; i++) {
+        const value = data[i];
+        if (i === 0) {
+          result[i.toString()] = findExamplesFromJSON(value, maxLength, {}, visited);
         } else {
-          result[key] = value;
+          result[i.toString()] = '... (' + (data.length - 1) + ' items not shown)';
+          break;
+        }
+      }
+    } else if (data.constructor === Object) {
+      for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          const value = data[key];
+          if (Array.isArray(value)) {
+            result[key] = value.length > 0 ? [findExamplesFromJSON(value[0], maxLength, {}, visited)] : [];
+            result[key].push('... (' + (value.length - 1) + ' items not shown)');
+          } else if (typeof value === 'object' && value !== null) {
+            result[key] = findExamplesFromJSON(value, maxLength, {}, visited);
+          } else if (typeof value === 'string') {
+            result[key] = truncateString(value);
+          } else {
+            result[key] = value;
+          }
         }
       }
     }
@@ -86,3 +97,240 @@ export function findExamplesFromJSON(data: any, maxLength: number = 30, result: 
 
   return result;
 }
+
+export function truncateString(value: string, maxLength: number = 30): string {
+  const characterCount = value.length;
+  let truncated = value
+  if (characterCount > maxLength) {
+    const chatMessages: ChatMessage[] = [{ role: "user", content: value }];
+    const tokens = tokenizer.encodeChat(chatMessages, "gpt-4");
+    const tokenCount = tokens.length;
+    const characterTokenRatio = characterCount / tokenCount;
+
+    if (characterTokenRatio < 2) {
+      truncated = value.slice(0, maxLength) + '...';
+    } else {
+      truncated = value;
+  }}
+
+
+  return truncated
+}
+
+
+export function truncateExample(example: any, path: string, maxLength: number = 30): any {
+  const pathParts = path.split('|');
+  const parameterName = pathParts.pop();
+
+  // Check if parameterName is undefined and handle it
+  if (!parameterName) {
+    console.error("No parameter name provided in the path.");
+    return example; // Return the example as is or handle as needed
+  }
+
+  // Recursive function to truncate elements or object properties
+  function truncateValue(value: any): any {
+    if (Array.isArray(value)) {
+      return value.map(item => truncateValue(item));
+    } else if (typeof value === 'object' && value !== null) {
+      const truncatedObject: { [key: string]: any } = {};
+      for (const key in value) {
+        truncatedObject[key] = truncateValue(value[key]);
+      }
+      return truncatedObject;
+    }
+    return value; // Return as is for numbers, booleans, etc.
+  }
+
+  // Function to extract an object containing only the desired parameter if it exists
+  function extractRelevantObject(objects: any[]): any {
+    return objects.map(obj => {
+      if (parameterName && obj && typeof obj === 'object' && parameterName in obj) {
+        const extracted = { [parameterName]: truncateValue(obj[parameterName]) };
+        return extracted;
+      }
+      return null;
+    }).find(obj => obj !== null);
+  }
+
+
+  const stringExample = JSON.stringify(example)
+
+  if (stringExample == undefined) {
+    console.log('String Example undefined');
+    return null
+  }
+
+  const characterCount: number = stringExample.length;
+
+  if (characterCount <= maxLength) {
+    return example;  // Return as is if under maxLength
+  }
+
+  if (typeof example === 'string') {
+    return truncateString(example, maxLength);
+  } else if (Array.isArray(example)) {
+    if (example.length === 0) return '[]'; // Handle empty arrays
+
+    let displayedExample: any;
+    if (example[0] && typeof example[0] === 'object') {
+      // Handle array of objects looking specifically for an object containing the parameter
+      const relevantObject = extractRelevantObject(example);
+      displayedExample = relevantObject ? relevantObject : truncateValue(example[0]);  // Use a truncated example that includes the parameter
+    } else {
+      // Handle array of primitives or nested arrays
+      displayedExample = truncateValue(example[0]);
+    }
+    const moreCount = example.length - 1;
+    return `[${JSON.stringify(displayedExample)}${moreCount > 0 ? `, ... (${moreCount} more items)` : ''}]`;
+  }
+
+  return truncateValue(example);  // Fallback for any other types
+}
+
+export function parseFormUrlEncoded(encodedString: string): Record<string, string> {
+  const params: Record<string, string> = {};
+  const pairs = encodedString.split('&');
+  pairs.forEach(pair => {
+    const [key, value] = pair.split('=');
+    params[decodeURIComponent(key)] = decodeURIComponent(value.replace(/\+/g, ' '));
+  });
+  return params;
+}
+
+export function capitalizeFirstLetter(string: string | null): string | null {
+  if (string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+  return string;
+}
+
+
+export function getResponseParameterExample(endpoint: Endpoint, paramPath: string): string | undefined {
+  const pathParts = paramPath.split('|');
+  const method = pathParts[0];
+
+  const methods = ['POST', 'GET', 'PUT', 'DELETE', 'PATCH']
+
+  let reconstructedPath = '';
+
+  for (let i = 0; i < pathParts.length; i++) {
+    let pathElement = pathParts[i]
+    if (!methods.includes(pathElement) && pathElement !== 'properties' && pathElement !== 'items') {
+        if (pathElement === 'body') {
+          pathElement = 'mostRecent'
+        }
+        if (reconstructedPath.length > 0) {
+            reconstructedPath += '|'; 
+        }
+        reconstructedPath += pathElement;
+    }
+  }
+
+  function getExample(obj: any, paramPath: string): any {
+    const pathParts = paramPath.split('|');
+
+    let currentObj = obj;
+    for (const part of pathParts) {
+      if (Array.isArray(currentObj)) {
+        return currentObj;
+      }
+      if (currentObj.hasOwnProperty(part)) {
+        currentObj = currentObj[part];
+      } else {
+        return undefined;
+      }
+    }
+    return currentObj;
+  }
+  const example = getExample(endpoint.data.methods[method], reconstructedPath);
+  return example
+  }
+
+
+
+
+export function getParameterExample(endpoint: Endpoint, paramPath: string): string | undefined {
+  //console.log('Parameter path:', paramPath);
+  const pathParts = paramPath.split('|');
+
+  const methods = ['POST', 'GET', 'PUT', 'DELETE', 'PATCH']
+  const method = pathParts[0];
+
+  let reconstructedPath = '';
+
+  for (let i = 0; i < pathParts.length; i++) {
+    let pathElement = pathParts[i]
+    if (!methods.includes(pathElement) && pathElement !== 'properties' && pathElement !== 'items') {
+      if (pathElement === 'body') {
+        pathElement = 'mostRecent'
+      }
+      if (reconstructedPath.length > 0) {
+          reconstructedPath += '|'; // Add the separator only if something is already in the string
+      }
+      reconstructedPath += pathElement;
+    }
+  }
+
+  function getExample(obj: any, paramPath: string): any {
+    const pathParts = paramPath.split('|');
+
+    let currentObj = obj;
+    for (const part of pathParts) {
+      if (currentObj.hasOwnProperty(part)) {
+        currentObj = currentObj[part];
+      } else {
+        return undefined;
+      }
+    }
+    return currentObj;
+  }
+
+  const example = getExample(endpoint.data.methods[method], reconstructedPath);
+  return example;
+}
+
+
+export function getQueryParameterExample(parametersToDescribe: Array<{ path: string; schema: any }>, endpoint: Endpoint, methodType: string) {
+
+  const method = endpoint.data.methods[methodType]?.request;
+  if (!method) {
+    console.error(`No request method found for type ${methodType}`);
+    return {};
+  }
+
+  const parameterExamples: Record<string, string | null> = {};
+
+  console.log('METHOD IN QUERY:', method);
+
+  // Attempt to find the mostRecent data, prioritizing regular form over UTF-8
+  const mostRecent = method['application/x-www-form-urlencoded']?.mostRecent ||
+                     method['application/x-www-form-urlencoded;charset=UTF-8']?.mostRecent;
+
+  if (!mostRecent) {
+    console.error('No form data found');
+    return parameterExamples; // Return early if no data
+  }
+
+  // Process each URL-encoded string in mostRecent
+  Object.entries(mostRecent).forEach(([_, encodedStr]) => {
+
+    const params = parseFormUrlEncoded(encodedStr);
+
+    console.log('Params in get query examples:', params)
+
+    parametersToDescribe.forEach(parameter => {
+      const parameterName = parameter.path.split('|').pop();
+      if (parameterName && (parameterName in params)) {
+        parameterExamples[parameter.path] = JSON.stringify(params[parameterName]);
+      } else {
+        console.error(`Could not find example for '${parameter.path}'`);
+        parameterExamples[parameter.path] = null;
+      }
+    });
+  });
+
+  return parameterExamples;
+}
+
+
