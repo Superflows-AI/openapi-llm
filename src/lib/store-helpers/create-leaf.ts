@@ -68,10 +68,12 @@ function createLeaf({ harRequest, responseBody, options }: Params): Leaf {
           },
         },
         responseHeaders: createSchemaElseUndefined(responseHeaders),
-        queryParameters: createSchemaElseUndefined(queryParameters),
+        queryParameters: {
+          params: createSchemaElseUndefined(queryParameters),
+          ...(enableMoreInfo && { mostRecent: queryParameters})
       },
     },
-  };
+  }};
   return leafPart;
 }
 

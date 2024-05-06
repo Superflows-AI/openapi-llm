@@ -7,9 +7,7 @@ RULES:
 
 export function endpointDescriptionPrompt(methodsString: string): string {
 
-  const paramPrompt = `Here is an example request and response from an API endpoint: ${methodsString}. Concisely describe the functionality of this API endpoint in 1 sentence. Aim for at most 30 words. Give an overview information you need to use the endpoint. 
-
-  Do not restate that this is an endpoint instead describe what it does, what it is for, and how to use it. AVOID UNNECESSARY WORDS - ONLY PROVIDE SPECIFIC USEFUL INFORMATION.
+  const paramPrompt = `Here is an example request and response from an API endpoint: ${methodsString}.
   
   ASSISTANT:  This is an endpoint that`;
 
@@ -21,7 +19,7 @@ export const parameterSystemPrompt = `You are an expert, articulate programmer. 
 export function parameterDescriptionPrompt(endpointDescription: string, parentPath: string, schema: string, example: string): string {
 
 
-  const paramPrompt = `You are an expert, articulate programmer. In 1 sentence and a maximum of 20 words explain how this parameter should is used in the context of the endpoint based on the following details: 
+  const paramPrompt = `
   - ENDPOINT_DESCRIPTION: ${endpointDescription}
   - PATH_TO_PARAMETER: '${parentPath}'
   - TYPE_OF_PARAMETER: '${schema}'

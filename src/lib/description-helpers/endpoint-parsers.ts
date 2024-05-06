@@ -8,7 +8,17 @@ export type Result = { [key: string]: any };
 // Helper function to convert method details into a string
 export function methodDetailsToString(method: any): string {
 
-  //const queryString = 
+  const queryParametersString = method.queryParameters
+    ? Object.entries(method.queryParameters.params?.properties || {})
+        .map(([paramName, paramSchema]) => {
+          const example = method.queryParameters.mostRecent?.[paramName];
+          const exampleString = example !== undefined ? JSON.stringify(example) : 'No recent example';
+          const paramType = (paramSchema as { type?: string }).type || 'unknown';
+          return `${paramName}: ${paramType}. ${exampleString}`;
+        })
+        .join('\n')
+    : 'No query parameters';
+
 
   const requestString = method.request
     ? Object.entries(method.request as { [mediaType: string]: any }).map(([mediaType, req]) => {
@@ -30,7 +40,7 @@ export function methodDetailsToString(method: any): string {
       }).join('\n')
     : 'No response info';
 
-  return `Request:\n${requestString}\nResponse:\n${responseString}`;
+  return `Query Parameters: \n${queryParametersString}\nRequest:\n${requestString}\nResponse:\n${responseString}`;
 }
 // Helper function to convert schema objects into a string representation
 export function schemaToString(schema: Schema): string {
@@ -44,15 +54,6 @@ export function schemaToString(schema: Schema): string {
   return schemaDetails;
 }
 
-// Function to convert the endpoint object into a string representation
-export function endpointToString(endpoint: Endpoint): string {
-  const partsString = endpoint.parts.map(part => `${part.part} (type: ${part.type})`).join(', ');
-  const methodsString = Object.entries(endpoint.data.methods).map(([method, details]) => {
-      return `${method.toUpperCase()}: ` + methodDetailsToString(details);
-  }).join('\n');
-
-  return `Pathname: ${endpoint.pathname}\nParts: [${partsString}]\nMethods:\n${methodsString}`;
-}
 
 export function findExamplesFromJSON(data: any, maxLength: number = 30, result: Result = {}, visited = new Set()): Result {
   if (typeof data === 'string') {
@@ -98,6 +99,7 @@ export function findExamplesFromJSON(data: any, maxLength: number = 30, result: 
   return result;
 }
 
+// Function that uses a tokenizer to estimate useful information content, and truncates low information accordingly
 export function truncateString(value: string, maxLength: number = 30): string {
   const characterCount = value.length;
   let truncated = value
@@ -157,7 +159,6 @@ export function truncateExample(example: any, path: string, maxLength: number = 
   const stringExample = JSON.stringify(example)
 
   if (stringExample == undefined) {
-    console.log('String Example undefined');
     return null
   }
 
@@ -251,7 +252,6 @@ export function getResponseParameterExample(endpoint: Endpoint, paramPath: strin
 
 
 export function getParameterExample(endpoint: Endpoint, paramPath: string): string | undefined {
-  //console.log('Parameter path:', paramPath);
   const pathParts = paramPath.split('|');
 
   const methods = ['POST', 'GET', 'PUT', 'DELETE', 'PATCH']
@@ -289,48 +289,4 @@ export function getParameterExample(endpoint: Endpoint, paramPath: string): stri
   const example = getExample(endpoint.data.methods[method], reconstructedPath);
   return example;
 }
-
-
-export function getQueryParameterExample(parametersToDescribe: Array<{ path: string; schema: any }>, endpoint: Endpoint, methodType: string) {
-
-  const method = endpoint.data.methods[methodType]?.request;
-  if (!method) {
-    console.error(`No request method found for type ${methodType}`);
-    return {};
-  }
-
-  const parameterExamples: Record<string, string | null> = {};
-
-  console.log('METHOD IN QUERY:', method);
-
-  // Attempt to find the mostRecent data, prioritizing regular form over UTF-8
-  const mostRecent = method['application/x-www-form-urlencoded']?.mostRecent ||
-                     method['application/x-www-form-urlencoded;charset=UTF-8']?.mostRecent;
-
-  if (!mostRecent) {
-    console.error('No form data found');
-    return parameterExamples; // Return early if no data
-  }
-
-  // Process each URL-encoded string in mostRecent
-  Object.entries(mostRecent).forEach(([_, encodedStr]) => {
-
-    const params = parseFormUrlEncoded(encodedStr);
-
-    console.log('Params in get query examples:', params)
-
-    parametersToDescribe.forEach(parameter => {
-      const parameterName = parameter.path.split('|').pop();
-      if (parameterName && (parameterName in params)) {
-        parameterExamples[parameter.path] = JSON.stringify(params[parameterName]);
-      } else {
-        console.error(`Could not find example for '${parameter.path}'`);
-        parameterExamples[parameter.path] = null;
-      }
-    });
-  });
-
-  return parameterExamples;
-}
-
 

@@ -5,6 +5,10 @@ import type { Leaf } from "../../utils/types";
 type Data = Leaf["methods"]["get"];
 type Req = NonNullable<Leaf["methods"]["get"]["request"]>;
 type Res = Leaf["methods"]["get"]["response"];
+type Query = Leaf["methods"]["get"]["queryParameters"]; 
+type MostRecent = {
+  [key: string]: unknown; 
+};
 
 const mergeAuthentication = (dest: Leaf, src: Leaf): void => {
   if (!src.authentication) return;
@@ -33,6 +37,7 @@ const mergeRequest = (dest: Data, src: Req = {}) => {
 };
 
 const mergeResponse = (dest: Data, src: Res = {}) => {
+
   Object.entries(src).forEach(([statusCode, srcMediaTypeObj]) => {
     // statusCode in src does not exist in dest
     if (!dest["response"]?.[statusCode]) {
@@ -58,6 +63,42 @@ const mergeResponse = (dest: Data, src: Res = {}) => {
   });
 };
 
+const mergeQueryParameters = (dest: Data, src: Query = {}) => {
+
+  if (!src.params) {
+    return;
+  }
+  if (!dest.queryParameters) {
+    dest.queryParameters = {
+      params: {},
+      mostRecent: {}
+    };
+  }
+  if (!dest.queryParameters.params) {
+    dest.queryParameters.params = {};
+  }
+
+  const destParams = dest.queryParameters.params as Record<string, any>;
+  const destMostRecent = dest.queryParameters.mostRecent as MostRecent;
+  const srcParams = src.params as Record<string, any>;
+  const srcMostRecent = src.mostRecent as MostRecent;
+
+  for (const param in srcParams) {
+    const newParamSchema = srcParams[param];
+    if (destParams[param]) {
+      destParams[param] = mergeSchemas([destParams[param], newParamSchema]);
+    } else {
+      destParams[param] = newParamSchema;
+    }
+
+    if (srcMostRecent && srcMostRecent[param]) {
+      destMostRecent[param] = srcMostRecent[param];
+    }
+  }
+
+  dest.queryParameters.mostRecent = destMostRecent;
+};
+
 export const mergeLeaves = (dest: Leaf, src: Leaf): Leaf => {
   mergeAuthentication(dest, src);
   for (const [method, methodObj] of Object.entries(src.methods)) {
@@ -75,11 +116,9 @@ export const mergeLeaves = (dest: Leaf, src: Leaf): Leaf => {
 
     // Merge query params
     if (destSchema.queryParameters || srcSchema.queryParameters) {
-      const schemas = [
-        destSchema.queryParameters,
-        srcSchema.queryParameters,
-      ].filter(Boolean) as Schema[];
-      destSchema.queryParameters = mergeSchemas(schemas);
+
+      mergeQueryParameters(destSchema, srcSchema.queryParameters);
+
     }
 
     // Merge request headers

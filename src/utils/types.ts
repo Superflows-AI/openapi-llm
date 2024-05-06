@@ -52,7 +52,7 @@ export type Leaf = {
     [method: string]: {
       // Requests may not contain a body
       request?: {
-        // mediaType is a a mime type such as application/json
+        // mediaType is a mime type such as application/json
         [mediaType: string]: {
           body?: Schema;
           // Sample of the most recent request
@@ -70,7 +70,11 @@ export type Leaf = {
         };
       };
       responseHeaders?: Schema;
-      queryParameters?: Schema;
+      queryParameters?: {
+        params?: Schema;
+        mostRecent?: unknown;
+      }
+      
     };
   };
 };

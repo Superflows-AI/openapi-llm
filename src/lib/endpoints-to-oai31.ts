@@ -5,7 +5,6 @@ import {
   PathItemObject,
   SecurityRequirementObject,
   SecuritySchemeObject,
-//  SchemaObject,
 } from "openapi3-ts/oas31";
 
 import {
@@ -51,7 +50,9 @@ const endpointsToOAI31 = (
 
 
       const queryParameterObjects = createQueryParameterTypes(
-        endpointMethod.queryParameters
+        endpointMethod.queryParameters?.params,
+        options, 
+        endpointMethod.queryParameters?.mostRecent,
       );
 
       const requestBody = createRequestTypes(
