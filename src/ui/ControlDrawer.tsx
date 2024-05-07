@@ -35,26 +35,7 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   const context = useContext(Context);
 
   // Endpoint selection logic
-
   const [showPathParameters, setShowPathParameters] = useState(true);
-
-  // Endpoints selection logic
-  // const endpointOptions = context.endpoints.map(endpoint => ({
-  //   value: `${endpoint.host}${endpoint.pathname}`,
-  //   label: `${endpoint.host}${endpoint.pathname}`
-  // }));
-
-  // const selectedEndpointValues = Array.from(context.selectedEndpoints).map(identifier => ({
-  //   value: identifier,
-  //   label: identifier // Assuming identifier is a readable string
-  // }));
-
-  // const onEndpointChange = (selectedOptions: MultiValueType) => {
-  //   const newSelectedEndpoints = new Set<string>(selectedOptions.map(option => option.value));
-  //   context.setSelectedEndpoints(newSelectedEndpoints);
-  // };
-
-  // Host selection logic
 
   const toast = useToast();
   const hosts = Array.from(context.allHosts);
