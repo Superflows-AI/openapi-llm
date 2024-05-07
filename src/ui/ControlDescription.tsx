@@ -106,7 +106,7 @@ const ControlDescription = () => {
 
           {context.endpoints.length !== 0 && (
               <Text mt={2} color="gray.700" marginBottom="1em">
-                Identify and select endpoints to describe below, then click 'Describe Endpoints'.
+                 Click hostname to select endpoints, then click 'Describe Endpoints'
               </Text>
             )}
           {context.endpoints.length === 0 && (
