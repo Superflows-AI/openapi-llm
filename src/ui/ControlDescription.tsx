@@ -93,11 +93,11 @@ const ControlDescription = () => {
           <Heading as="h2" size="md" marginBottom="1em" marginTop="1em">
             Select Endpoints for AI Description
           </Heading>
-          <Heading as="h2" size="sm" marginBottom="1em" marginTop="1em">
+          <Text as="h2" size="sm" marginBottom="1em" marginTop="1em">
             Your OpenAI key is only ever stored locally
-          </Heading>
+          </Text>
           <Input
-            placeholder="Enter your OpenAI API Key. This is only ever stored locally."
+            placeholder="Enter your OpenAI API Key..."
             value={apiKey}
             onChange={(e) => handleApiKeyChange(e.target.value)}
             className={classes.apiKeyInput}
@@ -156,11 +156,16 @@ const ControlDescription = () => {
           <Button
             mt={4}
             colorScheme="blue"
-            isDisabled={context.selectedEndpoints.size === 0}
+            isDisabled={(context.selectedEndpoints.size === 0 || context.descriptionsLoading)}
             onClick={handleDescribeEndpoints}
           >
             Describe Endpoints
           </Button>
+          {context.descriptionsLoading && (
+            <Text mt={2} color="gray.700" marginBottom="1em">
+              Describing endpoints... 
+            </Text>
+          )}
         </div>
       </VStack>
     </>

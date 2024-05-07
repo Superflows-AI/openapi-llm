@@ -27,8 +27,8 @@ function Main() {
 
   const [endpointDescriptions, setEndpointDescriptions] = useState<Record<string, string>>({});
 
-  // const [paramDescriptions, setParamDescriptions] = useState<Record<string, Record<string, Record<string, string | null>>>>({});
-
+  const [descriptionsLoading, setDescriptionsLoading] = useState<boolean>(false);
+  
   const [requestBodySchemaParamDescriptions, setRequestBodySchemaParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
   const [responseBodySchemaParamDescriptions, setResponseBodySchemaParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
   const [queryParamDescriptions, setQueryParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
@@ -179,7 +179,8 @@ function Main() {
     const responseBodySchemaParams: Record<string, Record<string, string | null>> = {};
     const queryParams: Record<string, Record<string, string | null>> = {};
 
-  
+    setDescriptionsLoading(true);
+
     for (const id of selectedEndpoints) {
       const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
       if (endpoint) {
@@ -196,6 +197,8 @@ function Main() {
     requestStore.setRequestBodySchemaParamDescriptions(requestBodySchemaParams);
     requestStore.setResponseBodySchemaParamDescriptions(responseBodySchemaParams);
     requestStore.setQueryParamDescriptions(queryParams);
+
+    setDescriptionsLoading(false);
 
     setSpecEndpoints();
   };
@@ -240,6 +243,7 @@ function Main() {
         setResponseBodySchemaParamDescriptions,
         queryParamDescriptions,
         setQueryParamDescriptions,
+        descriptionsLoading
       }}
     >
       <div className={classes.wrapper}>
