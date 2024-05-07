@@ -42,6 +42,17 @@ export function methodDetailsToString(method: any): string {
 
   return `Query Parameters: \n${queryParametersString}\nRequest:\n${requestString}\nResponse:\n${responseString}`;
 }
+
+
+export function endpointToString(endpoint: Endpoint): string {
+  const partsString = endpoint.parts.map(part => `${part.part} (type: ${part.type})`).join(', ');
+  const methodsString = Object.entries(endpoint.data.methods).map(([method, details]) => {
+      return `${method.toUpperCase()}: ` + methodDetailsToString(details);
+  }).join('\n');
+
+  return `Pathname: ${endpoint.pathname}\nParts: [${partsString}]\nMethods:\n${methodsString}`;
+}
+
 // Helper function to convert schema objects into a string representation
 export function schemaToString(schema: Schema): string {
   let schemaDetails = schema.type ? `Type: ${schema.type}` : '';
