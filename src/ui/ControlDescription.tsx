@@ -104,7 +104,7 @@ const ControlDescription = () => {
             marginBottom="1em"
           />
 
-          {context.endpoints.length !== 0 && context.selectedEndpoints.size === 0 && (
+          {context.endpoints.length !== 0 && (
               <Text mt={2} color="gray.700" marginBottom="1em">
                 Identify and select endpoints to describe below, then click 'Describe Endpoints'.
               </Text>
