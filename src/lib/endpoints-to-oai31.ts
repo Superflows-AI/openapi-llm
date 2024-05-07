@@ -17,6 +17,7 @@ import {
   formatAuthType,
   shouldIncludeRequestBody,
 } from "./endpoints-to-oai31.helpers.js";
+
 import { Options } from "./RequestStore.js";
 import { defaultOptions } from "./store-helpers/persist-options.js";
 import { AuthTypeString, Endpoint } from "../utils/types.js";
@@ -71,7 +72,7 @@ const endpointsToOAI31 = (
         Object.values(endpoint.data.authentication).forEach((value) => {
           security.push({ [formatAuthType(value.authType)]: [] });
         });
-      };
+      }
 
       const operation: OperationObject = {
         summary: fullPath,

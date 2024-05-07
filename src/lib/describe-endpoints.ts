@@ -10,7 +10,7 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
     .map(([method, details]) => `${method.toUpperCase()}: ` + methodDetailsToString(details))
     .join('\n');
 
-  let endpointPrompt = endpointDescriptionPrompt(methodsString);
+  const endpointPrompt = endpointDescriptionPrompt(methodsString);
 
   try {
     const endpointDescription = await callOpenAI(endpointPrompt, endpointSystemPrompt, model);
@@ -179,7 +179,6 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
 export async function describeQueryParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
   const parametersToDescribe: Array<{ path: string; schema: any }> = [];
-  const mostRecentExamples: Record<string, any> = {};
 
   for (const methodType of Object.keys(endpoint.data.methods)) {
     const method = endpoint.data.methods[methodType];
@@ -187,17 +186,12 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
       const examples = method.queryParameters.mostRecent as Record<string, any>;
       const params = method.queryParameters.params;
 
-      // Store the mostRecent examples in a separate object for easy access
-      Object.assign(mostRecentExamples, examples);
-
       // Check if params exists and has properties
       if (params && params.properties) {
         // Iterate through each parameter in params.properties
         for (const paramName of Object.keys(params.properties)) {
           const param = params.properties[paramName];
           const paramPath = `${methodType}|queryParameters|params|properties|${paramName}`;
-          
-          //const paramType = param.type;
 
           // Check if an example exists for the current parameter
           let example = examples[paramName];
