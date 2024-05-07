@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-export default async function callOpenAI(string: string, systemPrompt: string, model: string) {
+export default async function callOpenAI(userPrompt: string, systemPrompt: string, model: string) {
 
   const apiKey: string | null = localStorage.getItem('OPENAI_API_KEY');
 
@@ -10,7 +10,7 @@ export default async function callOpenAI(string: string, systemPrompt: string, m
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       messages: [
         { role: 'system', content: systemPrompt},
-        { role: 'user', content: string }],
+        { role: 'user', content: userPrompt }],
       model: model,
     };
     try {
