@@ -12,7 +12,7 @@
 
   <p align="center" style="max-width: 600px;">
 
-    Generate a described OpenAPI Specification in real time for any app or website. A browser extension that discovers API behaivour via your interactions with a product or website, and then uses an LLM to describe the API endpoints discovered.
+    Generate a OpenAPI Specification in real time for any app or website, and get the endpoints and parameters described in natural language. A browser extension that discovers API behaivour via your interactions with a product or website, and then uses an LLM to describe the API endpoints discovered.
 
     <br />
     <br />
@@ -22,7 +22,7 @@
     <br />
     <br />
 
-    We extended the functionality of the original tool because we find natural language descriptions in OpenAPI Specifications useful for both humans and AIs reading them. 
+    The <a href="https://www.superflows.ai/"> Superflows </a> team extended the functionality of the original tool after building AI assistants using OpenAPI specifications. We found it useful to have natural language descriptions in OpenAPI Specifications, both for human understanding and to increasing the reliability of AI assistants reading them. 
 
   </p>
   </p>
@@ -62,7 +62,6 @@ To install manually:
   - In the top right enable the `Developer mode` toggle
   - In the top left click `Load unpacked` and select the extracted `dist` directory
   - Open a new tab and then select `OpenAPI` in the developer tools (open with `cmd+i` or `ctrl+i`)
-  - Firefox is more challenging. Please use the add-on store.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
