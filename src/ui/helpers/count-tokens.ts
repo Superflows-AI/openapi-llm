@@ -23,7 +23,6 @@ export default function countTokens(endpoint: Endpoint): number {
   // Per the docs, the tokenizer should be the same for 3.5-turbo and 4.
   const encoded = tokenizer.encodeChat(gptMessage, "gpt-4");
 
-  // console.log('In get token count, token count:', encoded.length)
   return encoded.length;
 }
 

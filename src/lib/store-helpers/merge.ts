@@ -101,8 +101,6 @@ export const mergeLeaves = (dest: Leaf, src: Leaf): Leaf => {
 
     // Merge query params
     if (destSchema.queryParameters || srcSchema.queryParameters) {
-      console.log('Dest Schema', destSchema.queryParameters);
-      console.log('src Schema', srcSchema.queryParameters);
       mergeQueryParameters(destSchema, srcSchema.queryParameters);
     }
 
