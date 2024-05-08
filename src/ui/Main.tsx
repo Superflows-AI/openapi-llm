@@ -108,6 +108,7 @@ function Main() {
 
   useEffect(() => {
     requestStore.setDisabledHosts(disabledHosts);
+    setEndpointDescriptions(endpointDescriptions)
     requestStore.setEndpointDescriptions(endpointDescriptions);
     mergeDescriptions(endpoints);
     setSpecEndpoints();
@@ -119,9 +120,7 @@ function Main() {
         chrome.devtools.network.onRequestFinished.removeListener(
           requestFinishedHandler
         );
-        const tempEndpointDescriptions = requestStore.getEndpointDescriptions()
         requestStore.clear();
-        setEndpointDescriptions(tempEndpointDescriptions)
         setSpec(null);
         setAllHosts(new Set());
         setDisabledHosts(new Set());
