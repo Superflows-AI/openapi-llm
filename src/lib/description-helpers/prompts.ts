@@ -7,11 +7,11 @@ RULES:
 
 export function endpointDescriptionPrompt(methodsString: string): string {
 
-  const paramPrompt = `Here is an example request and response from an API endpoint: ${methodsString}.
+  return `Here is an example usage of an API endpoint, including Query Parameters, Request Body and Response Body from an API endpoint: ${methodsString}.
   
-  ASSISTANT:  This is an endpoint that`;
+  Explain how the API endpoint is used without referencing parts of the example.
 
-  return paramPrompt
+  ASSISTANT:  This is an endpoint that`;
 }
 
 export const parameterSystemPrompt = `You are an expert, articulate programmer. 
@@ -24,14 +24,13 @@ RULES:
 
 export function parameterDescriptionPrompt(endpointDescription: string, parentPath: string, schema: string, example: string): string {
 
-
-  const paramPrompt = `
+  return `Here is information about a parameter in an API endpoint, including the type of parameter, example usage, and the API endpoint description:
   - ENDPOINT_DESCRIPTION: ${endpointDescription}
   - PATH_TO_PARAMETER: '${parentPath}'
   - TYPE_OF_PARAMETER: '${schema}'
   - EXAMPLE_USAGE: '${example}'
 
-  ASSISTANT:  This parameter is a ${schema} that`;
+  Explain how the API endpoint is used without including the information shown here.
 
-  return paramPrompt
+  ASSISTANT:  This parameter is a ${schema} that`;
 }
