@@ -5,8 +5,9 @@ import { ChatMessage } from "../../ui/helpers/count-tokens";
 
 export type Result = { [key: string]: any };
 
-// Helper function to convert method details into a string
+
 export function methodDetailsToString(method: any): string {
+  /** Helper function to convert method details into a string **/ 
 
   const queryParametersString = method.queryParameters
     ? Object.entries(method.queryParameters.parameters?.properties || {})
@@ -53,8 +54,10 @@ export function endpointToString(endpoint: Endpoint): string {
   return `Pathname: ${endpoint.pathname}\nParts: [${partsString}]\nMethods:\n${methodsString}`;
 }
 
-// Helper function to convert schema objects into a string representation
+
 export function schemaToString(schema: Schema): string {
+  /** Helper function to convert schema objects into a string representation **/
+
   let schemaDetails = schema.type ? `Type: ${schema.type}` : '';
   if (schema.properties) {
       const propertiesString = Object.entries(schema.properties).map(([key, val]) => {
@@ -110,8 +113,10 @@ export function findExamplesFromJSON(data: any, maxLength: number = 30, result: 
   return result;
 }
 
-// Function that uses a tokenizer to estimate useful information content, and truncates low information accordingly
+
 export function truncateString(value: string, maxLength: number = 30): string {
+  /** Function that uses a tokenizer to estimate useful information content, 
+   * and truncates low information accordingly **/
   const characterCount = value.length;
   let truncated = value
   if (characterCount > maxLength) {
@@ -141,8 +146,9 @@ export function truncateExample(example: any, path: string, maxLength: number = 
     return example; // Return the example as is or handle as needed
   }
 
-  // Recursive function to truncate elements or object properties
+  
   function truncateValue(value: any): any {
+    /**  Recursive function to truncate elements or object properties */
     if (Array.isArray(value)) {
       return value.map(item => truncateValue(item));
     } else if (typeof value === 'object' && value !== null) {
@@ -155,8 +161,8 @@ export function truncateExample(example: any, path: string, maxLength: number = 
     return value; // Return as is for numbers, booleans, etc.
   }
 
-  // Function to extract an object containing only the desired parameter if it exists
   function extractRelevantObject(objects: any[]): any {
+    /** Function to extract an object containing only the desired parameter if it exists  */
     return objects.map(obj => {
       if (parameterName && obj && typeof obj === 'object' && parameterName in obj) {
         const extracted = { [parameterName]: truncateValue(obj[parameterName]) };
