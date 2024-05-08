@@ -33,7 +33,7 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
 
 export async function describeRequestBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
-  const mostRecentExamples: Record<string, Schema> = {};
+  const mostRecentExamples: Record<string, Schema | null> = {};
 
   async function traverseSchema(schema: Schema, parentPath: string) {
     if (schema.type === 'object') {
@@ -43,13 +43,11 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
           try {
             const example = truncateExample(getParameterExample(endpoint, fullParamPath), parentPath);
             if (example !== undefined) {
-              mostRecentExamples[fullParamPath] = example;
+              mostRecentExamples[fullParamPath] = example !== null ? example : null;
             }
-          } 
-          catch {
+          } catch {
             console.warn(`Did not find example at ${fullParamPath}`);
           }
-          
           traverseSchema(paramSchema, fullParamPath);
         }
       }
@@ -70,7 +68,8 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
         }
         
         const schemaPrompt = schemaToString(schema);
-        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaPrompt, example);
+        const paramExample = JSON.stringify(example);
+        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaPrompt, paramExample);
         const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
         if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
           const content = paramDescription.choices[0].message.content;
@@ -135,7 +134,9 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
         if (typeof example !== 'string'){
           example = JSON.stringify(example);
         }
-        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaToString(schema), example)
+
+        const promptExample = JSON.stringify(example);
+        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaToString(schema), promptExample)
 
         const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model); 
 
@@ -189,7 +190,7 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
           const paramPath = `${methodType}|queryParameters|parameters|properties|${paramName}`;
 
           // Check if an example exists for the current parameter
-          let example = examples[paramName];
+          const example = examples[paramName];
 
           // Store the parameter information
           parametersToDescribe.push({
@@ -198,10 +199,8 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
           });
 
           try {
-            example = truncateExample(example, paramPath);
-
-            const promptExample = schemaToString(example);
-
+            const promptExample = JSON.stringify(truncateExample(example, paramPath));
+            
             const paramPrompt = parameterDescriptionPrompt(endpointDescription, paramPath, schemaToString(param), promptExample);
 
             const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);

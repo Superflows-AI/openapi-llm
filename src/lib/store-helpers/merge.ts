@@ -1,14 +1,7 @@
 import { mergeSchemas, Schema } from "genson-js";
 
-import type { Leaf } from "../../utils/types";
+import type { Leaf, Data, Req, Res, Query } from "../../utils/types";
 
-type Data = Leaf["methods"]["get"];
-type Req = NonNullable<Leaf["methods"]["get"]["request"]>;
-type Res = Leaf["methods"]["get"]["response"];
-type Query = Leaf["methods"]["get"]["queryParameters"]; 
-// type MostRecent = {
-//   [key: string]: unknown; 
-// };
 
 const mergeAuthentication = (dest: Leaf, src: Leaf): void => {
   if (!src.authentication) return;

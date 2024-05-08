@@ -1,19 +1,20 @@
 import type { Schema } from "genson-js";
-import { Endpoint, } from "../../utils/types"; // Method 
+import { Endpoint, MethodInstance } from "../../utils/types"; // Method 
 import tokenizer from "gpt-tokenizer";
 import { ChatMessage } from "../../ui/helpers/count-tokens"; 
+import type { Req, Res } from "../../utils/types";
 
 
-export type Result = { [key: string]: any };
+export type Result = { [key: string]: unknown };
 
 
-export function methodDetailsToString(method: any): string {
+export function methodDetailsToString(method: MethodInstance): string {
   /** Helper function to convert method details into a string **/ 
 
   const queryParametersString = method.queryParameters
     ? Object.entries(method.queryParameters.parameters?.properties || {})
         .map(([paramName, paramSchema]) => {
-          const example = method.queryParameters.mostRecent?.[paramName];
+          const example = (method.queryParameters?.mostRecent as Record<string, unknown>)?.[paramName];
           const exampleString = example !== undefined ? JSON.stringify(example) : 'No recent example';
           const paramType = (paramSchema as { type?: string }).type || 'unknown';
           return `${paramName}: ${paramType}. ${exampleString}`;
@@ -23,7 +24,7 @@ export function methodDetailsToString(method: any): string {
 
 
   const requestString = method.request
-    ? Object.entries(method.request as { [mediaType: string]: any }).map(([mediaType, req]) => {
+    ? Object.entries(method.request as { [mediaType: string]: Req }).map(([mediaType, req]) => {
         const parsedRequest = req.mostRecent
           ? JSON.stringify(findExamplesFromJSON(req.mostRecent))
           : 'No recent example';
@@ -32,7 +33,7 @@ export function methodDetailsToString(method: any): string {
     : 'No request info';
 
   const responseString = method.response
-    ? Object.entries(method.response as { [statusCode: string]: { [mediaType: string]: any } }).map(([statusCode, responses]) => {
+    ? Object.entries(method.response as { [statusCode: string]: { [mediaType: string]: Res } }).map(([statusCode, responses]) => {
         return `${statusCode}: ` + Object.entries(responses).map(([mediaType, res]) => {
           const mostRecent = res.mostRecent
             ? JSON.stringify(findExamplesFromJSON(res.mostRecent))
@@ -70,7 +71,7 @@ export function schemaToString(schema: Schema): string {
 }
 
 
-export function findExamplesFromJSON(data: any, maxLength: number = 30, result: Result = {}, visited = new Set()): Result {
+export function findExamplesFromJSON(data: unknown, maxLength: number = 30, result: Result = {}, visited = new Set()): Result {
   if (typeof data === 'string') {
     result['example'] = truncateString(data);
     return result;
@@ -93,12 +94,13 @@ export function findExamplesFromJSON(data: any, maxLength: number = 30, result: 
         }
       }
     } else if (data.constructor === Object) {
-      for (const key in data) {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-          const value = data[key];
+      const dataObj = data as Record<string, unknown>;
+      for (const key in dataObj) {
+        if (Object.prototype.hasOwnProperty.call(dataObj, key)) {
+          const value = dataObj[key];
           if (Array.isArray(value)) {
             result[key] = value.length > 0 ? [findExamplesFromJSON(value[0], maxLength, {}, visited)] : [];
-            result[key].push('... (' + (value.length - 1) + ' items not shown)');
+            (result[key] as unknown[]).push('... (' + (value.length - 1) + ' items not shown)');
           } else if (typeof value === 'object' && value !== null) {
             result[key] = findExamplesFromJSON(value, maxLength, {}, visited);
           } else if (typeof value === 'string') {
@@ -137,7 +139,7 @@ export function truncateString(value: string, maxLength: number = 30): string {
 }
 
 
-export function truncateExample(example: any, path: string, maxLength: number = 30): any {
+export function truncateExample(example: unknown, path: string, maxLength: number = 30): unknown {
   const pathParts = path.split('|');
   const parameterName = pathParts.pop();
 
@@ -148,31 +150,30 @@ export function truncateExample(example: any, path: string, maxLength: number = 
   }
 
   
-  function truncateValue(value: any): any {
-    /**  Recursive function to truncate elements or object properties */
+  function truncateValue(value: unknown): unknown {
     if (Array.isArray(value)) {
       return value.map(item => truncateValue(item));
     } else if (typeof value === 'object' && value !== null) {
-      const truncatedObject: { [key: string]: any } = {};
-      for (const key in value) {
-        truncatedObject[key] = truncateValue(value[key]);
+      const valueObj = value as Record<string, unknown>;
+      const truncatedObject: { [key: string]: unknown } = {};
+      for (const key in valueObj) {
+        truncatedObject[key] = truncateValue(valueObj[key]);
       }
       return truncatedObject;
     }
-    return value; // Return as is for numbers, booleans, etc.
+    return value;
   }
 
-  function extractRelevantObject(objects: any[]): any {
-    /** Function to extract an object containing only the desired parameter if it exists  */
+  function extractRelevantObject(objects: unknown[]): unknown {
     return objects.map(obj => {
       if (parameterName && obj && typeof obj === 'object' && parameterName in obj) {
-        const extracted = { [parameterName]: truncateValue(obj[parameterName]) };
+        const objRecord = obj as Record<string, unknown>;
+        const extracted = { [parameterName]: truncateValue(objRecord[parameterName]) };
         return extracted;
       }
       return null;
     }).find(obj => obj !== null);
   }
-
 
   const stringExample = JSON.stringify(example)
 
@@ -191,7 +192,7 @@ export function truncateExample(example: any, path: string, maxLength: number = 
   } else if (Array.isArray(example)) {
     if (example.length === 0) return '[]'; // Handle empty arrays
 
-    let displayedExample: any;
+    let displayedExample: unknown;
     if (example[0] && typeof example[0] === 'object') {
       // Handle array of objects looking specifically for an object containing the parameter
       const relevantObject = extractRelevantObject(example);
@@ -246,24 +247,26 @@ export function getResponseParameterExample(endpoint: Endpoint, paramPath: strin
     }
   }
 
-  function getExample(obj: any, paramPath: string): any {
+  function getExample(obj: unknown, paramPath: string): unknown {
     const pathParts = paramPath.split('|');
-
-    let currentObj = obj;
+    let currentObj: unknown = obj;
+  
     for (const part of pathParts) {
       if (Array.isArray(currentObj)) {
         return currentObj;
       }
-      if (currentObj.hasOwnProperty(part)) {
-        currentObj = currentObj[part];
+      if (typeof currentObj === 'object' && currentObj !== null && Object.prototype.hasOwnProperty.call(currentObj, part)) {
+        currentObj = (currentObj as Record<string, unknown>)[part];
       } else {
         return undefined;
       }
     }
+  
     return currentObj;
   }
+  
   const example = getExample(endpoint.data.methods[method], reconstructedPath);
-  return example
+  return example as string | undefined;
   }
 
 
@@ -290,21 +293,26 @@ export function getParameterExample(endpoint: Endpoint, paramPath: string): stri
     }
   }
 
-  function getExample(obj: any, paramPath: string): any {
+  function getExample(obj: unknown, paramPath: string): unknown {
     const pathParts = paramPath.split('|');
-
-    let currentObj = obj;
+    let currentObj: unknown = obj;
+  
     for (const part of pathParts) {
-      if (currentObj.hasOwnProperty(part)) {
-        currentObj = currentObj[part];
+      if (Array.isArray(currentObj)) {
+        return currentObj;
+      }
+      if (typeof currentObj === 'object' && currentObj !== null && Object.prototype.hasOwnProperty.call(currentObj, part)) {
+        currentObj = (currentObj as Record<string, unknown>)[part];
       } else {
         return undefined;
       }
     }
+  
     return currentObj;
   }
-
+  
   const example = getExample(endpoint.data.methods[method], reconstructedPath);
-  return example;
-}
+  return example as string | undefined;
+  }
+
 

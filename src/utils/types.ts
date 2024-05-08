@@ -117,3 +117,8 @@ export type LeafMap = { [host: string]: Record<string, RouteData> };
 
 export type EndpointsByHost = Array<{ endpoints: Endpoint[]; host: string }>;
 export type Method = Leaf["methods"];
+export type MethodInstance = Leaf["methods"][string];
+export type Data = Leaf["methods"]["get"];
+export type Req = NonNullable<Leaf["methods"]["get"]["request"]>;
+export type Res = Leaf["methods"]["get"]["response"];
+export type Query = Leaf["methods"]["get"]["queryParameters"]; 
