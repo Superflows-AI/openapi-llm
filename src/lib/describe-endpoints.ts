@@ -184,14 +184,14 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
     const method = endpoint.data.methods[methodType];
     if (method.queryParameters) {
       const examples = method.queryParameters.mostRecent as Record<string, any>;
-      const params = method.queryParameters.params;
+      const params = method.queryParameters.parameters;
 
       // Check if params exists and has properties
       if (params && params.properties) {
         // Iterate through each parameter in params.properties
         for (const paramName of Object.keys(params.properties)) {
           const param = params.properties[paramName];
-          const paramPath = `${methodType}|queryParameters|params|properties|${paramName}`;
+          const paramPath = `${methodType}|queryParameters|parameters|properties|${paramName}`;
 
           // Check if an example exists for the current parameter
           let example = examples[paramName];

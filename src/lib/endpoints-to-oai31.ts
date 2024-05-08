@@ -49,9 +49,9 @@ const endpointsToOAI31 = (
       const methodLower = method.toLowerCase();
       const endpointMethod = endpoint.data.methods[method]!;
 
-
+      // TODO UPDATE PARAMETERS TO PROPERTIES
       const queryParameterObjects = createQueryParameterTypes(
-        endpointMethod.queryParameters?.params,
+        endpointMethod.queryParameters?.parameters,
         options, 
         endpointMethod.queryParameters?.mostRecent,
       );
@@ -86,7 +86,7 @@ const endpointsToOAI31 = (
         ...queryParameterObjects,
       ];
 
-
+      // TODO CHECK HERE
       if (allParameterObjects.length) {
         operation.parameters = allParameterObjects;
       }

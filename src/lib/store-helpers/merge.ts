@@ -6,9 +6,9 @@ type Data = Leaf["methods"]["get"];
 type Req = NonNullable<Leaf["methods"]["get"]["request"]>;
 type Res = Leaf["methods"]["get"]["response"];
 type Query = Leaf["methods"]["get"]["queryParameters"]; 
-type MostRecent = {
-  [key: string]: unknown; 
-};
+// type MostRecent = {
+//   [key: string]: unknown; 
+// };
 
 const mergeAuthentication = (dest: Leaf, src: Leaf): void => {
   if (!src.authentication) return;
@@ -64,40 +64,25 @@ const mergeResponse = (dest: Data, src: Res = {}) => {
 };
 
 const mergeQueryParameters = (dest: Data, src: Query = {}) => {
+  // Assume src and dest have the same method structure and we're merging for a specific method, e.g., 'get'
+  const destQueryParams = dest.queryParameters;
 
-  if (!src.params) {
-    return;
+  // If there's nothing to merge from src, exit early
+  if (!src|| !src.parameters) return;
+
+  // If dest does not have existing query parameters, directly assign from src
+  if (!destQueryParams || !destQueryParams.parameters) {
+    dest.queryParameters = src;
+  } else {
+    // If both src and dest have query parameters, merge them
+    dest.queryParameters!.parameters = mergeSchemas([
+      destQueryParams.parameters!,
+      src.parameters,
+    ]);
+    dest.queryParameters!.mostRecent = src.mostRecent;
   }
-  if (!dest.queryParameters) {
-    dest.queryParameters = {
-      params: {},
-      mostRecent: {}
-    };
-  }
-  if (!dest.queryParameters.params) {
-    dest.queryParameters.params = {};
-  }
-
-  const destParams = dest.queryParameters.params as Record<string, any>;
-  const destMostRecent = dest.queryParameters.mostRecent as MostRecent;
-  const srcParams = src.params as Record<string, any>;
-  const srcMostRecent = src.mostRecent as MostRecent;
-
-  for (const param in srcParams) {
-    const newParamSchema = srcParams[param];
-    if (destParams[param]) {
-      destParams[param] = mergeSchemas([destParams[param], newParamSchema]);
-    } else {
-      destParams[param] = newParamSchema;
-    }
-
-    if (srcMostRecent && srcMostRecent[param]) {
-      destMostRecent[param] = srcMostRecent[param];
-    }
-  }
-
-  dest.queryParameters.mostRecent = destMostRecent;
 };
+
 
 export const mergeLeaves = (dest: Leaf, src: Leaf): Leaf => {
   mergeAuthentication(dest, src);
@@ -116,9 +101,9 @@ export const mergeLeaves = (dest: Leaf, src: Leaf): Leaf => {
 
     // Merge query params
     if (destSchema.queryParameters || srcSchema.queryParameters) {
-
+      console.log('Dest Schema', destSchema.queryParameters);
+      console.log('src Schema', srcSchema.queryParameters);
       mergeQueryParameters(destSchema, srcSchema.queryParameters);
-
     }
 
     // Merge request headers

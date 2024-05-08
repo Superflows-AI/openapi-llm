@@ -4,7 +4,7 @@ import { RedocStandalone } from "redoc";
 import type RequestStore from "../lib/RequestStore";
 import requestStore from "./helpers/request-store";
 import { safelyGetURLHost } from "../utils/helpers";
-import { EndpointsByHost, Endpoint, Status, TokenCounts} from "../utils/types"; //defaultParams
+import { EndpointsByHost, Endpoint, Status, TokenCounts} from "../utils/types"; 
 import Context from "./context";
 import Control from "./Control";
 import Start from "./Start";

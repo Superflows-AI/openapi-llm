@@ -9,7 +9,7 @@ export type Result = { [key: string]: any };
 export function methodDetailsToString(method: any): string {
 
   const queryParametersString = method.queryParameters
-    ? Object.entries(method.queryParameters.params?.properties || {})
+    ? Object.entries(method.queryParameters.parameters?.properties || {})
         .map(([paramName, paramSchema]) => {
           const example = method.queryParameters.mostRecent?.[paramName];
           const exampleString = example !== undefined ? JSON.stringify(example) : 'No recent example';

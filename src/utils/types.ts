@@ -71,7 +71,7 @@ export type Leaf = {
       };
       responseHeaders?: Schema;
       queryParameters?: {
-        params?: Schema;
+        parameters?: Schema;
         mostRecent?: unknown;
       }
       
