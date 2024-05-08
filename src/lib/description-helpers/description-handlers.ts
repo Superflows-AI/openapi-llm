@@ -1,10 +1,9 @@
-import { Endpoint } from "../../utils/types";
+import { Endpoint, Method } from "../../utils/types";
 import requestStore from "../../ui/helpers/request-store";
 
 export function getEndpointIdentifier(endpoint: Endpoint): string {
   return `${endpoint.host}${endpoint.pathname}`;
 }
-
 
 export function mergeDescriptions(endpoints: Array<Endpoint>): Array<Endpoint> {
     const descriptions = requestStore.getEndpointDescriptions();
@@ -48,11 +47,11 @@ export function mergeDescriptions(endpoints: Array<Endpoint>): Array<Endpoint> {
   
   
 function mergeParamDescriptions (
-    obj: Record<string, any>,
+    obj: Method,
     paramDescriptions: Record<string, Record<string, string | null>>,
-): Record<string, any> {
+): Method {
 
-    const mergedParams: Record<string, any> = JSON.parse(JSON.stringify(obj));
+    const mergedParams = JSON.parse(JSON.stringify(obj));
 
     Object.keys(paramDescriptions).forEach(endpointId => {
         Object.keys(paramDescriptions[endpointId]).forEach(paramPath => {
@@ -75,5 +74,5 @@ function mergeParamDescriptions (
             }
         });
     });
-    return mergedParams;
+    return mergedParams as Method;
 }
