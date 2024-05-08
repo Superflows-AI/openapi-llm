@@ -174,10 +174,11 @@ function Main() {
 
 
   const describeSelectedEndpoints = async (selectedEndpoints: Set<string>) => {
-    const descriptions: Record<string, string> = {};
-    const requestBodySchemaParams: Record<string, Record<string, string | null>> = {};
-    const responseBodySchemaParams: Record<string, Record<string, string | null>> = {};
-    const queryParams: Record<string, Record<string, string | null>> = {};
+
+    const descriptions = requestStore.getEndpointDescriptions();
+    const requestBodySchemaParams = requestStore.requestBodySchemaParamDescriptions;
+    const responseBodySchemaParams = requestStore.responseBodySchemaParamDescriptions;
+    const queryParams = requestStore.queryParamDescriptions;
 
     setDescriptionsLoading(true);
 

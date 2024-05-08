@@ -1,36 +1,8 @@
 import { Endpoint } from "../../utils/types";
 import requestStore from "../../ui/helpers/request-store";
-import { describeApiEndpoint, describeRequestBodySchemaParameters,describeQueryParameters, describeResponseBodySchemaParameters } from "../describe-endpoints"; // describeRequestHeaders
 
 export function getEndpointIdentifier(endpoint: Endpoint): string {
   return `${endpoint.host}${endpoint.pathname}`;
-}
-
-export async function describeSelectedEndpoints(selectedEndpoints: Set<string>, endpoints: Endpoint[], requestStore: any, setSpecEndpoints: () => void): Promise<void> {
-    const descriptions: Record<string, string> = {};
-    const requestBodySchemaParams: Record<string, Record<string, string | null>> = {};
-    const responseBodySchemaParams: Record<string, Record<string, string | null>> = {};
-    const queryParams: Record<string, Record<string, string | null>> = {};
-
-    for (const id of selectedEndpoints) {
-        const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
-        if (endpoint) {
-            const description = await describeApiEndpoint(endpoint, 'gpt-4');
-            if (description !== null) {
-                descriptions[id] = description;
-            }
-            requestBodySchemaParams[id] = await describeRequestBodySchemaParameters(endpoint, descriptions[id], 'gpt-4');
-            responseBodySchemaParams[id] = await describeResponseBodySchemaParameters(endpoint, descriptions[id], 'gpt-4');
-            queryParams[id] = await describeQueryParameters(endpoint, descriptions[id], 'gpt-4');
-        }
-    }
-
-    requestStore.setEndpointDescriptions(descriptions);
-    requestStore.setRequestBodySchemaParamDescriptions(requestBodySchemaParams);
-    requestStore.setResponseBodySchemaParamDescriptions(responseBodySchemaParams);
-    requestStore.setQueryParamDescriptions(queryParams);
-
-    setSpecEndpoints();
 }
 
 
