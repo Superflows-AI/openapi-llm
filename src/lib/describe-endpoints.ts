@@ -203,8 +203,8 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
   return parameterDescriptions;
 }
 
-export async function describeQueryParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
-  const parameterDescriptions: Record<string, string | null> = {};
+export function getQueryParameterPrompts(endpoint: Endpoint, endpointDescription: string) : Record<string, string> {
+  const parameterPrompts: Record<string, string> = {};
   const parametersToDescribe: Array<{ path: string; schema: Schema }> = [];
   const endpointId = `${endpoint.host}${endpoint.pathname}`;
 
@@ -230,30 +230,40 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
             schema: param,
           });
 
-          try {
-            const promptExample = JSON.stringify(truncateExample(example, paramPath));
+          const promptExample = JSON.stringify(truncateExample(example, paramPath));
             
-            const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, paramPath, schemaToString(param), promptExample);
-            console.log('Query paramPrompt:',paramPrompt)
-            const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
-            if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-              const content = paramDescription.choices[0].message.content;
-              const capContent = capitalizeFirstLetter(content);
-              parameterDescriptions[paramPath] = capContent;
-            } else {
-              console.warn(`Unexpected OpenAI response format for parameter '${paramPath}':`, paramDescription);
-              parameterDescriptions[paramPath] = null;
-            }
-      
-          } catch (error) {
-            console.error(`Error describing parameter '${paramPath}':`, error);
-            parameterDescriptions[paramPath] = null;
-          }
-
+          const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, paramPath, schemaToString(param), promptExample);
+          parameterPrompts[paramPath] = paramPrompt;
         }
       }
     }
   }
-  return parameterDescriptions;
+  return parameterPrompts;
 }
 
+
+export async function describeQueryParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
+  const parameterDescriptions: Record<string, string | null> = {};
+
+  const paramPrompts = getQueryParameterPrompts(endpoint, endpointDescription);
+
+  for (const paramPath in paramPrompts) {
+    const paramPrompt = paramPrompts[paramPath];
+
+    try {
+      const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
+      if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
+        const content = paramDescription.choices[0].message.content;
+        const capContent = capitalizeFirstLetter(content);
+        parameterDescriptions[paramPath] = capContent;
+      } else {
+        console.warn(`Unexpected OpenAI response format for parameter '${paramPath}':`, paramDescription);
+        parameterDescriptions[paramPath] = null;
+      }
+    } catch (error) {
+      console.error(`Error describing parameter '${paramPath}':`, error);
+      parameterDescriptions[paramPath] = null;
+    }
+  }
+  return parameterDescriptions;
+  }
