@@ -37,11 +37,12 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
   }
 }
 
-export async function describeRequestBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
-  const parameterDescriptions: Record<string, string | null> = {};
+export function getRequestBodyParameterPrompts(endpoint: Endpoint, endpointDescription: string): Record<string, string> {
+  
   const mostRecentExamples: Record<string, Schema | null> = {};
   const endpointId = `${endpoint.host}${endpoint.pathname}`;
-  console.log('Endpoint ID:', endpointId)
+  const parameterPrompts: Record<string, string> = {};
+
   async function traverseSchema(schema: Schema, parentPath: string) {
     if (schema.type === 'object') {
       if (schema.properties) {
@@ -64,11 +65,7 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
         const fullParamPath = `${parentPath}[${index}]`;
         traverseSchema(subSchema, fullParamPath);
       }
-    }
-    
-    else {
-
-      try {
+    } else {
         let example = truncateExample(getParameterExample(endpoint, parentPath), parentPath);
         if (typeof example !== 'string'){
           example = JSON.stringify(example);
@@ -77,23 +74,10 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
         const schemaPrompt = schemaToString(schema);
         const paramExample = JSON.stringify(example);
         const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, parentPath, schemaPrompt, paramExample);
-        console.log('Req paramPrompt:',paramPrompt)
-        const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
-        if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          const content = paramDescription.choices[0].message.content;
-          const capContent = capitalizeFirstLetter(content);
-          parameterDescriptions[parentPath] = capContent;
-        } else {
-          console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
-          parameterDescriptions[parentPath] = null;
-        }
-
-      } catch (error) {
-        console.error(`Error describing parameter '${parentPath}':`, error);
-        parameterDescriptions[parentPath] = null;
-      }
+        parameterPrompts[parentPath] = paramPrompt;   
     }
   }
+
 
   for (const methodType of Object.keys(endpoint.data.methods)) {
     const method = endpoint.data.methods[methodType];
@@ -105,6 +89,37 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
       }
     }
   }
+  return parameterPrompts;
+}
+
+export async function describeRequestBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
+  const parameterDescriptions: Record<string, string | null> = {};
+  
+  // const endpointId = `${endpoint.host}${endpoint.pathname}`;
+
+  const paramPrompts = getRequestBodyParameterPrompts(endpoint, endpointDescription);
+
+  for (const parentPath in paramPrompts) {
+    try {
+      console.log('Parent Path:', parentPath);
+      console.log('Req Param prompt:', paramPrompts[parentPath]);
+      const paramDescription = await callOpenAI(paramPrompts[parentPath], parameterSystemPrompt, model);
+
+      if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
+        const content = paramDescription.choices[0].message.content;
+        const capContent = capitalizeFirstLetter(content);
+        parameterDescriptions[parentPath] = capContent;
+        } else {
+          console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
+          parameterDescriptions[parentPath] = null;
+        }
+
+        } catch (error) {
+          console.error(`Error describing parameter '${parentPath}':`, error);
+          parameterDescriptions[parentPath] = null;
+        }
+      }
+  console.log('REQ PARAM Descriptions:', parameterDescriptions)
   return parameterDescriptions;
 }
 
