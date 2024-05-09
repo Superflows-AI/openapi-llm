@@ -12,6 +12,7 @@ export default async function callOpenAI(userPrompt: string, systemPrompt: strin
         { role: 'system', content: systemPrompt},
         { role: 'user', content: userPrompt }],
       model: model,
+      temperature: 0.0
     };
     try {
       const chatCompletion: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create(params);
