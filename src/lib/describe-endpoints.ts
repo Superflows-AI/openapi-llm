@@ -5,13 +5,19 @@ import { endpointSystemPrompt, parameterSystemPrompt, endpointDescriptionPrompt,
 import callOpenAI from "./callOpenAI";
 
 
+export function getEndpointPrompt (endpoint: Endpoint): string {
+  const methodsString = Object.entries(endpoint.data.methods)
+  .map(([method, details]) => `${method.toUpperCase()}: ` + methodDetailsToString(details))
+  .join('\n');
+
+  return endpointDescriptionPrompt(methodsString);;
+}
+
+
 export async function describeApiEndpoint(endpoint: Endpoint, model: string): Promise<string | null> {
 
-  const methodsString = Object.entries(endpoint.data.methods)
-    .map(([method, details]) => `${method.toUpperCase()}: ` + methodDetailsToString(details))
-    .join('\n');
+  const endpointPrompt = getEndpointPrompt(endpoint);
 
-  const endpointPrompt = endpointDescriptionPrompt(methodsString);
   console.log('Endpoint prompt:', endpointPrompt)
   try {
     const endpointDescription = await callOpenAI(endpointPrompt, endpointSystemPrompt, model);
