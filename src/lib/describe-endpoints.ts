@@ -123,11 +123,10 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
   return parameterDescriptions;
 }
 
-
-export async function describeResponseBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
-  const parameterDescriptions: Record<string, string | null> = {};
+export function getResponseBodyPrompts(endpoint: Endpoint, endpointDescription: string) : Record<string, string> {
   const endpointId = `${endpoint.host}${endpoint.pathname}`;
-
+  const parameterPrompts: Record<string, string> = {};
+  
   async function traverseSchema(schema: Schema, parentPath: string) {
     if (schema.type === 'object') {
       if (schema.properties) {
@@ -141,42 +140,21 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
         if (typeof example !== 'string'){
           example = JSON.stringify(example);
         }
-        if (example !== undefined) {
-          parameterDescriptions[parentPath] = null;
-        }
         if (schema.items) {
           const fullParamPath = `${parentPath}|items`;
           traverseSchema(schema.items, fullParamPath);
         }
       }
-    
     else {
 
-      try {
-
-        let example = truncateExample(getResponseParameterExample(endpoint, parentPath), parentPath);
-        if (typeof example !== 'string'){
-          example = JSON.stringify(example);
-        }
-
-        const promptExample = JSON.stringify(example);
-        const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, parentPath, schemaToString(schema), promptExample)
-        console.log('Res paramPrompt:',paramPrompt)
-        const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model); 
-
-        if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          const content = paramDescription.choices[0].message.content;
-          const capContent = capitalizeFirstLetter(content);
-          parameterDescriptions[parentPath] = capContent;
-        } else {
-          console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
-          parameterDescriptions[parentPath] = null;
-        }
-
-      } catch (error) {
-        console.error(`Error describing parameter '${parentPath}':`, error);
-        parameterDescriptions[parentPath] = null;
+      let example = truncateExample(getResponseParameterExample(endpoint, parentPath), parentPath);
+      if (typeof example !== 'string'){
+        example = JSON.stringify(example);
       }
+
+      const promptExample = JSON.stringify(example);
+      const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, parentPath, schemaToString(schema), promptExample)
+      parameterPrompts[parentPath] = paramPrompt;
     }
   }
 
@@ -192,7 +170,36 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
       }
     }
   }
+  return parameterPrompts;
+}
 
+
+export async function describeResponseBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
+  const parameterDescriptions: Record<string, string | null> = {};
+
+  const paramPrompts = getResponseBodyPrompts(endpoint, endpointDescription);
+
+  for (const parentPath in paramPrompts) {
+
+    try {
+      console.log('Parent Path:', parentPath);
+      const paramPrompt = paramPrompts[parentPath];
+      const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model); 
+
+      if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
+        const content = paramDescription.choices[0].message.content;
+        const capContent = capitalizeFirstLetter(content);
+        parameterDescriptions[parentPath] = capContent;
+      } else {
+        console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
+        parameterDescriptions[parentPath] = null;
+      }
+
+      } catch (error) {
+        console.error(`Error describing parameter '${parentPath}':`, error);
+        parameterDescriptions[parentPath] = null;
+      }
+    }
   return parameterDescriptions;
 }
 
