@@ -12,7 +12,7 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
     .join('\n');
 
   const endpointPrompt = endpointDescriptionPrompt(methodsString);
-
+  console.log('Endpoint prompt:', endpointPrompt)
   try {
     const endpointDescription = await callOpenAI(endpointPrompt, endpointSystemPrompt, model);
     if (endpointDescription.choices && endpointDescription.choices.length > 0 && endpointDescription.choices[0].message) {
@@ -34,7 +34,8 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
 export async function describeRequestBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
   const mostRecentExamples: Record<string, Schema | null> = {};
-
+  const endpointId = `${endpoint.host}${endpoint.pathname}`;
+  console.log('Endpoint ID:', endpointId)
   async function traverseSchema(schema: Schema, parentPath: string) {
     if (schema.type === 'object') {
       if (schema.properties) {
@@ -69,7 +70,8 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
         
         const schemaPrompt = schemaToString(schema);
         const paramExample = JSON.stringify(example);
-        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaPrompt, paramExample);
+        const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, parentPath, schemaPrompt, paramExample);
+        console.log('Req paramPrompt:',paramPrompt)
         const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
         if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
           const content = paramDescription.choices[0].message.content;
@@ -103,6 +105,7 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
 
 export async function describeResponseBodySchemaParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
+  const endpointId = `${endpoint.host}${endpoint.pathname}`;
 
   async function traverseSchema(schema: Schema, parentPath: string) {
     if (schema.type === 'object') {
@@ -136,8 +139,8 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
         }
 
         const promptExample = JSON.stringify(example);
-        const paramPrompt = parameterDescriptionPrompt(endpointDescription, parentPath, schemaToString(schema), promptExample)
-
+        const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, parentPath, schemaToString(schema), promptExample)
+        console.log('Res paramPrompt:',paramPrompt)
         const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model); 
 
         if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
@@ -175,6 +178,7 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
 export async function describeQueryParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
   const parametersToDescribe: Array<{ path: string; schema: Schema }> = [];
+  const endpointId = `${endpoint.host}${endpoint.pathname}`;
 
   for (const methodType of Object.keys(endpoint.data.methods)) {
     const method = endpoint.data.methods[methodType];
@@ -201,8 +205,8 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
           try {
             const promptExample = JSON.stringify(truncateExample(example, paramPath));
             
-            const paramPrompt = parameterDescriptionPrompt(endpointDescription, paramPath, schemaToString(param), promptExample);
-
+            const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, paramPath, schemaToString(param), promptExample);
+            console.log('Query paramPrompt:',paramPrompt)
             const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
             if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
               const content = paramDescription.choices[0].message.content;
