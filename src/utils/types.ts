@@ -104,6 +104,12 @@ export type TokenCounts = {
   [key: string]: number;
 };
 
+export enum DescriptionStatus {
+  INACTIVE,
+  ACTIVE,
+  COMPLETED
+}
+
 export enum Status {
   INIT,
   RECORDING,

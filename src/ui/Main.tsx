@@ -4,7 +4,7 @@ import { RedocStandalone } from "redoc";
 import type RequestStore from "../lib/RequestStore";
 import requestStore from "./helpers/request-store";
 import { safelyGetURLHost } from "../utils/helpers";
-import { EndpointsByHost, Endpoint, Status, TokenCounts} from "../utils/types"; 
+import { EndpointsByHost, Endpoint, Status, TokenCounts, DescriptionStatus} from "../utils/types"; 
 import Context from "./context";
 import Control from "./Control";
 import Start from "./Start";
@@ -27,7 +27,7 @@ function Main() {
 
   const [endpointDescriptions, setEndpointDescriptions] = useState<Record<string, string>>({});
 
-  const [descriptionsLoading, setDescriptionsLoading] = useState<boolean>(false);
+  const [descriptionsLoading, setDescriptionsLoading] = useState<DescriptionStatus>(DescriptionStatus.INACTIVE);
   
   const [requestBodySchemaParamDescriptions, setRequestBodySchemaParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
   const [responseBodySchemaParamDescriptions, setResponseBodySchemaParamDescriptions] = useState<Record<string, Record<string, string | null>>>({});
@@ -179,7 +179,7 @@ function Main() {
     const responseBodySchemaParams = requestStore.responseBodySchemaParamDescriptions;
     const queryParams = requestStore.queryParamDescriptions;
 
-    setDescriptionsLoading(true);
+    setDescriptionsLoading(DescriptionStatus.ACTIVE);
 
     for (const id of selectedEndpoints) {
       const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
@@ -198,11 +198,15 @@ function Main() {
     requestStore.setResponseBodySchemaParamDescriptions(responseBodySchemaParams);
     requestStore.setQueryParamDescriptions(queryParams);
 
-    setDescriptionsLoading(false);
-
     setSpecEndpoints();
+    setDescriptionsLoading(DescriptionStatus.COMPLETED);
+    await delay(5000);
+    setDescriptionsLoading(DescriptionStatus.INACTIVE);
   };
 
+  function delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+  }
   useEffect(() => {
     const updatedEndpoints = mergeDescriptions(
       endpoints)

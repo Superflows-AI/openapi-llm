@@ -1,6 +1,6 @@
 import { createContext } from "react";
 import RequestStore from "../lib/RequestStore";
-import { Endpoint, EndpointsByHost, TokenCounts } from "../utils/types";
+import { Endpoint, EndpointsByHost, TokenCounts, DescriptionStatus } from "../utils/types";
 import { defaultOptions } from "../lib/store-helpers/persist-options";
 
 type ContextType = {
@@ -26,7 +26,7 @@ type ContextType = {
   setResponseBodySchemaParamDescriptions: (responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>) => void;
   queryParamDescriptions: Record<string, Record<string, string | null>>;
   setQueryParamDescriptions: (queryParamDescriptions: Record<string, Record<string, string | null>>) => void;
-  descriptionsLoading: boolean;
+  descriptionsLoading: DescriptionStatus;
 };
 
 const defaultContextValue: ContextType = {
@@ -52,7 +52,7 @@ const defaultContextValue: ContextType = {
   setResponseBodySchemaParamDescriptions: () => {},
   queryParamDescriptions: {},
   setQueryParamDescriptions: () => {},
-  descriptionsLoading: false
+  descriptionsLoading: DescriptionStatus.INACTIVE,
 };
 const Context = createContext<ContextType>(defaultContextValue);
 

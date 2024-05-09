@@ -15,7 +15,7 @@ import {
   Text,
   useToast
 } from "@chakra-ui/react";
-import { Endpoint } from "../utils/types"
+import { Endpoint, DescriptionStatus } from "../utils/types"
 import Context from "./context";
 import classes from "./controlDynamic.module.css";
 
@@ -154,14 +154,19 @@ const ControlDescription = () => {
           <Button
             mt={4}
             colorScheme="blue"
-            isDisabled={(context.selectedEndpoints.size === 0 || context.descriptionsLoading)}
+            isDisabled={(context.selectedEndpoints.size === 0 || context.descriptionsLoading === DescriptionStatus.ACTIVE)}
             onClick={handleDescribeEndpoints}
           >
             Describe Endpoints
           </Button>
-          {context.descriptionsLoading && (
+          {context.descriptionsLoading === DescriptionStatus.ACTIVE && (
             <Text mt={2} color="gray.700" marginBottom="1em">
               Describing endpoints... 
+            </Text>
+          )}
+          {context.descriptionsLoading === DescriptionStatus.COMPLETED && (
+            <Text mt={2} color="gray.700" marginBottom="1em">
+              Success! Check your described endpoints 
             </Text>
           )}
         </div>
