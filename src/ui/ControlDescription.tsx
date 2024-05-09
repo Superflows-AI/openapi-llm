@@ -17,7 +17,6 @@ import {
 } from "@chakra-ui/react";
 import { Endpoint } from "../utils/types"
 import Context from "./context";
-//import AutoSizer from "react-virtualized-auto-sizer";
 import classes from "./controlDynamic.module.css";
 
 interface EndpointsByHost {
@@ -27,7 +26,6 @@ interface EndpointsByHost {
 
 const ControlDescription = () => {
   const context = useContext(Context);
-  //const [search, setSearch] = useState("");
   const [apiKey, setApiKey] = useState("");
   const toast = useToast();
 
