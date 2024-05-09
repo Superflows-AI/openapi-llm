@@ -88,7 +88,10 @@ function Main() {
       const newTokenCounts: TokenCounts = {};
       for (const endpoint of currentEndpoints) {
         const identifier = getEndpointIdentifier(endpoint);
-        newTokenCounts[identifier] = await countTokens(endpoint);
+        const tokenCount = await countTokens(endpoint);
+        const inputTokenCost = tokenCount * 0.00003;
+        const outputTokenCost = tokenCount * 0.00006 * 0.001;
+        newTokenCounts[identifier] = Math.round((inputTokenCost + outputTokenCost) * 100) / 100;
       }
     setEndpointTokenCounts(newTokenCounts);}, [selectedEndpoints]);
 

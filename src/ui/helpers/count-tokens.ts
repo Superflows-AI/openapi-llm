@@ -1,6 +1,7 @@
 import { Endpoint } from "../../utils/types";
-import { endpointToString } from "../../lib/description-helpers/endpoint-parsers";
+import { getEndpointPrompt, getQueryParameterPrompts, getResponseBodyPrompts, getRequestBodyParameterPrompts } from "../../lib/describe-endpoints";
 import tokenizer from "gpt-tokenizer";
+
 
 export interface ChatMessage {
   role?: 'system' | 'user' | 'assistant'
@@ -10,7 +11,19 @@ export interface ChatMessage {
 
 export default function countTokens(endpoint: Endpoint): number {
 
-  const message = endpointToString(endpoint)
+  const endpointPrompt = getEndpointPrompt(endpoint);
+  const queryParameterPrompts = getQueryParameterPrompts(endpoint, endpointPrompt);
+  const responseBodyPrompts = getResponseBodyPrompts(endpoint, endpointPrompt);
+  const requestBodyParameterPrompts = getRequestBodyParameterPrompts(endpoint, endpointPrompt);
+
+  function concatValues(record: Record<string, string>): string {
+    return Object.values(record).join();  // Joins all values with new lines
+  }
+
+  const message = `${endpointPrompt}
+                  ${concatValues(queryParameterPrompts)}
+                  ${concatValues(responseBodyPrompts)}
+                  ${concatValues(requestBodyParameterPrompts)}`;
 
   let gptMessage: ChatMessage[];
 

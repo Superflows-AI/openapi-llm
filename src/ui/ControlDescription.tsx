@@ -134,13 +134,14 @@ const ControlDescription = () => {
                           {endpoints.map((endpoint) => {
                             const endpointKey = `${endpoint.host}${endpoint.pathname}`;
                             const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
+                            
                             return (
                               <Checkbox
                                 key={`${endpoint.host}${endpoint.pathname}`}
                                 value={`${endpoint.host}${endpoint.pathname}`}
                                 onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}`)}
                               >
-                                {endpoint.pathname} | Tokens: {tokenCount}
+                                {endpoint.pathname} | Est token cost ($): {tokenCount}
                               </Checkbox>
                             );
                           })}
