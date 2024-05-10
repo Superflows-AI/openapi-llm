@@ -3,7 +3,7 @@ import { Endpoint, MethodInstance } from "../../utils/types"; // Method
 import tokenizer from "gpt-tokenizer";
 import { ChatMessage } from "../../ui/helpers/count-tokens"; 
 import type { Req, Res } from "../../utils/types";
-
+// import { parameterDescriptionPrompt } from "./prompts";
 
 export type Result = { [key: string]: unknown };
 
@@ -133,8 +133,6 @@ export function truncateString(value: string, maxLength: number = 30): string {
     } else {
       truncated = value;
   }}
-
-
   return truncated
 }
 
@@ -204,7 +202,6 @@ export function truncateExample(example: unknown, path: string, maxLength: numbe
     const moreCount = example.length - 1;
     return `[${JSON.stringify(displayedExample)}${moreCount > 0 ? `, ... (${moreCount} more items)` : ''}]`;
   }
-
   return truncateValue(example);  // Fallback for any other types
 }
 
@@ -225,6 +222,181 @@ export function capitalizeFirstLetter(string: string | null): string | null {
   return string;
 }
 
+
+// export function getResponseBodyPrompts(endpoint: Endpoint, endpointDescription: string) : Record<string, string> {
+//   const endpointId = `${endpoint.host}${endpoint.pathname}`;
+//   const parameterPrompts: Record<string, string> = {};
+//   console.log('ENDPOINT:', endpoint);
+
+//   // TRAVERSE SCHEMA IS RETURNING TO EARLY WHEN IT FINDS AN ARRAY
+
+//   async function traverseSchema(schema: Schema, parentPath: string) {
+//     if (schema.type === 'object') {
+//       if (schema.properties) {
+//         for (const [paramName, paramSchema] of Object.entries(schema.properties)) {
+//           // If the currentschema has properties, go through the properties and recall traverseSchema
+
+//           const fullParamPath = `${parentPath}|properties|${paramName}`;
+//           traverseSchema(paramSchema, fullParamPath);
+//         } 
+//       } else if (schema.items) {
+//           const fullParamPath = `${parentPath}`;
+//           traverseSchema(schema.items, fullParamPath);
+//       }
+//     } else if (schema.type === 'array') {
+//         // If the current schema is type array, unless the schema has items, get the example 
+//         // If the schema has items, recall traverseSchema
+//         if (schema.items) {
+//           const fullParamPath = `${parentPath}|items`;
+//           traverseSchema(schema.items, fullParamPath);
+//         } else {
+//           traverseSchema(schema, parentPath);
+//         }
+//         // TODO: I don't think this does anything
+//         // let example = truncateExample(getResponseParameterExample(endpoint, parentPath), parentPath);
+
+//         // if (typeof example !== 'string'){
+//         //   example = JSON.stringify(example);
+//         // }
+        
+//       }
+//     else {
+//       // If the schema is not an object or array, get the example
+
+//       // TODO: This seems to fail if the example is an array of objects
+//       // Probably isn't included in the path?
+//       console.log('Endpoint:', endpoint);
+//       console.log('Response parentPath', parentPath);
+//       let example = truncateExample(getResponseParameterExample(endpoint, parentPath), parentPath);
+//       if (typeof example !== 'string'){
+//         example = JSON.stringify(example);
+//       }
+
+//       const promptExample = JSON.stringify(example);
+//       const paramPrompt = parameterDescriptionPrompt(endpointId, endpointDescription, parentPath, schemaToString(schema), promptExample)
+//       parameterPrompts[parentPath] = paramPrompt;
+//     }
+//   }
+
+//   // THE PATHS HERE COULD BE INCORRECT
+
+
+//   return parameterPrompts;
+// }
+
+export function getExample(endpoint: Endpoint, parameterPath: string): unknown {
+
+  const pathParts = parameterPath.split('|');
+  const methodType = pathParts[0];
+  const requestResponseType = pathParts[1];
+  let contentType = pathParts[2];
+  let statusCode = ''
+  if (requestResponseType === 'response') {
+    statusCode = pathParts[2];
+    contentType = pathParts[3];
+  }
+  
+  const startIndex = requestResponseType === 'request' ? 5 : 6;
+  const mostRecentPath = pathParts.slice(startIndex).filter(part => part !== 'items' && part !== 'properties');
+  const currentMethod = endpoint.data.methods[methodType];
+
+  // Declare currentContentType without initialization here.
+  let currentContentType: { body?: any; mostRecent?: any } | undefined;
+
+  if (requestResponseType === 'request') {
+    const currentReqRes = currentMethod.request;
+    currentContentType = currentReqRes ? currentReqRes[contentType] : undefined;
+  } else if (requestResponseType === 'response') {
+    const currentReqRes = currentMethod.response;
+    const currentStatusCode = currentReqRes[statusCode];
+    currentContentType = currentStatusCode ? currentStatusCode[contentType] : undefined;
+  } else {
+    console.warn('Invalid request/response type');
+    return undefined;
+  }
+
+  // Check and use currentContentType properly.
+  const currentMostRecent = currentContentType && 'mostRecent' in currentContentType ? currentContentType.mostRecent : undefined;
+
+  if (!currentMostRecent) {
+    console.warn('Most Recent not found');
+    return undefined;
+  }
+
+  let currentObj: any = currentMostRecent;
+
+  for (let i = 0; i < mostRecentPath.length; i++) {
+    const part = mostRecentPath[i];
+    console.log('Current Part:', part);
+
+    if (typeof currentObj === 'object' && currentObj !== null) {
+      if (part in currentObj) {
+        currentObj = currentObj[part];
+      } else if (Array.isArray(currentObj)) {
+        const result = currentObj.map(obj => obj[part]);
+        return result[0];  // Assumes returning the first element is desired.
+      } else {
+        console.warn('Invalid parameter path');
+        return undefined;
+      }
+    } else {
+      console.log('Invalid parameter path');
+      return undefined;
+    }
+  }
+  return currentObj;
+}
+  
+export function getParameterPaths(endpoint: Endpoint): Array<string> {
+  const parameterPaths: Array<string> = [];
+
+  async function traverseSchema(schema: Schema, parentPath: string) {
+    if (schema.type === 'object') {
+      if (schema.properties) {
+        for (const [paramName, paramSchema] of Object.entries(schema.properties)) {
+          const fullParamPath = `${parentPath}|properties|${paramName}`;
+          traverseSchema(paramSchema, fullParamPath);
+        }
+      } else if (schema.items) {
+        const fullParamPath = `${parentPath}`;
+        traverseSchema(schema.items, fullParamPath);
+      }
+    } else if (schema.type === 'array') {
+      if (schema.items) {
+        const fullParamPath = `${parentPath}|items`;
+        traverseSchema(schema.items, fullParamPath);
+      } else {
+        traverseSchema(schema, parentPath);
+      }
+    } else {
+      parameterPaths.push(parentPath);
+    }
+  }
+
+  for (const methodType of Object.keys(endpoint.data.methods)) {
+    const method = endpoint.data.methods[methodType];
+    if (method.request) {
+      for (const [contentType, req] of Object.entries(method.request)) {
+        if (req.body) {
+          const paramPath = `${methodType}|request|${contentType}|body`;
+          traverseSchema(req.body, paramPath);
+        }
+      }
+    }
+    if (method.response) {
+      for (const [statusCode, responses] of Object.entries(method.response)) {
+        for (const [contentType, res] of Object.entries(responses)) {
+          if (res.body) {
+            const paramPath = `${methodType}|response|${statusCode}|${contentType}|body`;
+            traverseSchema(res.body, paramPath);
+          }
+        }
+      }
+    }
+  }
+  console.log('PARAMETER PATHS',parameterPaths)
+  return parameterPaths;
+}
 
 export function getResponseParameterExample(endpoint: Endpoint, paramPath: string): string | undefined {
   const pathParts = paramPath.split('|');
@@ -248,28 +420,47 @@ export function getResponseParameterExample(endpoint: Endpoint, paramPath: strin
   }
 
   function getExample(obj: unknown, paramPath: string): unknown {
+
     const pathParts = paramPath.split('|');
+    const paramName = pathParts[pathParts.length - 1];
+
     let currentObj: unknown = obj;
-  
-    for (const part of pathParts) {
-      if (Array.isArray(currentObj)) {
+    
+    // SOME OF THE PATHS ARE INCORRECT -- THEY ARE RETURNING PATHS TOO EARLY. THIS LEADS TO LARGE AMOUNTS OF UNDEFINEDS AND LARGE ARRAYS
+
+
+    pathParts.forEach((part, index) => {
+      console.log('PART', part, 'INDEX', index);
+      console.log('PARAM NAME', paramName, 'PATH PARTS LENGTH', pathParts.length - 1);
+
+      if (part === paramName && index === pathParts.length - 1) {
+        console.log('Current Obj', currentObj);
+        console.log('RETURNING', (currentObj as Record<string, unknown>)[part]);
+        return (currentObj as Record<string, unknown>)[part];
+
+      } if (typeof currentObj === 'object' && currentObj !== null && Object.prototype.hasOwnProperty.call(currentObj, part)) {
+        currentObj = (currentObj as Record<string, unknown>)[part];
+
+      } if (Array.isArray(currentObj) && index === pathParts.length - 1) {
         return currentObj;
       }
-      if (typeof currentObj === 'object' && currentObj !== null && Object.prototype.hasOwnProperty.call(currentObj, part)) {
-        currentObj = (currentObj as Record<string, unknown>)[part];
-      } else {
+      // } if (Array.isArray(currentObj) && index !== pathParts.length - 1) {
+      //   // NEED TO HANDLE ARRAYS HERE
+      // }
+      // NEED TO HANDLE ARRAYS HERE
+      
+      else {
+        console.log('RETURNING UNDEFINED');
         return undefined;
       }
-    }
-  
-    return currentObj;
+    });
+    console.log('RETURNING OUT OF LOOP');
+    return (currentObj as Record<string, unknown>)[paramName];
   }
   
   const example = getExample(endpoint.data.methods[method], reconstructedPath);
   return example as string | undefined;
   }
-
-
 
 
 export function getParameterExample(endpoint: Endpoint, paramPath: string): string | undefined {
@@ -298,9 +489,9 @@ export function getParameterExample(endpoint: Endpoint, paramPath: string): stri
     let currentObj: unknown = obj;
   
     for (const part of pathParts) {
-      if (Array.isArray(currentObj)) {
-        return currentObj;
-      }
+      // if (Array.isArray(currentObj)) {
+      //   return currentObj;
+      // }
       if (typeof currentObj === 'object' && currentObj !== null && Object.prototype.hasOwnProperty.call(currentObj, part)) {
         currentObj = (currentObj as Record<string, unknown>)[part];
       } else {

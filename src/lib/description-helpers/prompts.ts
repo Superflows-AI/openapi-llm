@@ -25,17 +25,7 @@ RULES:
 export function parameterDescriptionPrompt(endpointId: string, endpointDescription: string, parentPath: string, schema: string, example: string): string {
 
   return `HUMAN:
-  - ENDPOINT_ID: www.youtube.com/youtubei/v1/player
-  - ENDPOINT_DESCRIPTION: Takes in JSON requests containing client and user details, video context, and returns detailed video data, including playback status and video details.
-  - PATH_TO_PARAMETER: 'POST|request|application/json|body|properties|context|properties|adSignalsInfo|properties|params'
-  - TYPE_OF_PARAMETER: 'Type: array'
-  - EXAMPLE_USAGE: '"[{\"key\":\"dt\",\"value\":\"1715243977084\"}, ... (16 more items)]"'
 
- Explain how this parameter in the API endpoint is used without including the information shown here.
-
-ASSISTANT: Pass an array of key-value pairs to customize ad signals.
-  
-  
   Here is information about a parameter in an API endpoint, including the type of parameter, example usage, and the API endpoint description:
   - ENDPOINT_ID: ${endpointId}
   - ENDPOINT_DESCRIPTION: ${endpointDescription}
