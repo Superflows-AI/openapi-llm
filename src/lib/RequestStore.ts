@@ -31,6 +31,7 @@ export default class RequestStore {
   public requestBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
   public responseBodySchemaParamDescriptions: Record<string, Record<string, string | null>>;
   public queryParamDescriptions: Record<string, Record<string, string | null>>;
+  public endpointTokenCounts: Record<string, number>;
   private storeOptions: Options;
 
   constructor(storeOptions = persistOptions.get()) {
@@ -41,6 +42,7 @@ export default class RequestStore {
     this.requestBodySchemaParamDescriptions = {};
     this.responseBodySchemaParamDescriptions = {};
     this.queryParamDescriptions = {};
+    this.endpointTokenCounts = {};
     this.storeOptions = storeOptions;
   }
 
@@ -53,12 +55,13 @@ export default class RequestStore {
 
   public import(json: string): boolean {
     try {
-      const { leafMap, disabledHosts, endpointDescriptions, requestBodySchemaParamDescriptions, responseBodySchemaParamDescriptions, queryParamDescriptions } = JSON.parse(json); //requestHeaderParamDescriptions, 
+      const { leafMap, disabledHosts, endpointDescriptions, requestBodySchemaParamDescriptions, responseBodySchemaParamDescriptions, queryParamDescriptions, endpointTokenCounts } = JSON.parse(json); //requestHeaderParamDescriptions, 
       this.disabledHosts = new Set(disabledHosts);
       this.endpointDescriptions = endpointDescriptions;
       this.requestBodySchemaParamDescriptions = requestBodySchemaParamDescriptions;
       this.responseBodySchemaParamDescriptions = responseBodySchemaParamDescriptions;
       this.queryParamDescriptions = queryParamDescriptions;
+      this.endpointTokenCounts = endpointTokenCounts;
       this.store = leafMapToRouterMap(leafMap);
       this.leafMap = leafMap;
       return true;
@@ -75,6 +78,7 @@ export default class RequestStore {
       requestBodySchemaParamDescriptions: this.requestBodySchemaParamDescriptions,
       responseBodySchemaParamDescriptions: this.responseBodySchemaParamDescriptions,
       queryParamDescriptions: this.queryParamDescriptions,
+      endpointTokenCounts: this.endpointTokenCounts,
     }).trim();
   };
 
@@ -209,5 +213,12 @@ export default class RequestStore {
     return this.queryParamDescriptions;
   }
 
+  public setEndpointTokenCounts(endpointTokenCounts: Record<string, number>): void {
+    this.endpointTokenCounts = endpointTokenCounts;
+  }
+
+  public getEndpointTokenCounts(): Record<string, number> {
+    return this.endpointTokenCounts;
+  }
 
 }

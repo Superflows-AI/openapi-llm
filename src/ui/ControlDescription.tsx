@@ -99,6 +99,7 @@ const ControlDescription = () => {
             value={apiKey}
             onChange={(e) => handleApiKeyChange(e.target.value)}
             className={classes.apiKeyInput}
+            type="password"
             marginBottom="1em"
           />
 

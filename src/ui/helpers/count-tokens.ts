@@ -9,24 +9,47 @@ export interface ChatMessage {
   content: string
 }
 
-export default function countTokens(endpoint: Endpoint): number {
+export default function estimateEndpointTokens(endpoint: Endpoint): number {
 
   const endpointPrompt = getEndpointPrompt(endpoint);
   const queryParameterPrompts = getQueryParameterPrompts(endpoint, endpointPrompt);
   const responseBodyPrompts = getResponseBodyPrompts(endpoint, endpointPrompt);
   const requestBodyParameterPrompts = getRequestBodyParameterPrompts(endpoint, endpointPrompt);
 
-  function concatValues(record: Record<string, string>): string {
-    return Object.values(record).join();  // Joins all values with new lines
-  }
+  const nReqPrompts = Object.keys(responseBodyPrompts).length;
+  const exampleRequestPrompt = responseBodyPrompts[Object.keys(responseBodyPrompts)[0]];
 
-  const message = `${endpointPrompt}
-                  ${concatValues(queryParameterPrompts)}
-                  ${concatValues(responseBodyPrompts)}
-                  ${concatValues(requestBodyParameterPrompts)}`;
+  const nResPrompts = Object.keys(requestBodyParameterPrompts).length;
+  const exampleResponsePrompt = requestBodyParameterPrompts[Object.keys(requestBodyParameterPrompts)[0]];
 
+  const nQueryPrompts = Object.keys(queryParameterPrompts).length;
+  const exampleQueryPrompt = queryParameterPrompts[Object.keys(queryParameterPrompts)[0]];
+
+  const endpointTokens = countTokens(endpointPrompt);
+  const estimatedResponseTokens = countTokens(exampleResponsePrompt) * nResPrompts;
+  const estimatedRequestTokens = countTokens(exampleRequestPrompt) * nReqPrompts;
+  const estimatedQueryTokens = countTokens(exampleQueryPrompt) * nQueryPrompts;
+
+  // console.log('ENDPOINT:', endpoint);
+
+  // console.log("Query parameter prompts: ",Object.keys(queryParameterPrompts));
+  // console.log("Response body prompts: ", Object.keys(responseBodyPrompts));
+  // console.log("Request body parameter prompts: ", Object.keys(requestBodyParameterPrompts));
+
+  // console.log("Endpoint tokens: ", endpointTokens);
+  // console.log("Estimated response tokens: ", estimatedResponseTokens);
+  // console.log("Estimated request tokens: ", estimatedRequestTokens);
+  // console.log("Estimated query tokens: ", estimatedQueryTokens);
+
+  // console.log('nReqPrompts: ', nReqPrompts);
+  // console.log('nResPrompts: ', nResPrompts);
+  // console.log('nQueryPrompts: ', nQueryPrompts);
+
+  return endpointTokens + estimatedResponseTokens + estimatedRequestTokens + estimatedQueryTokens;
+}
+
+function countTokens(message: string): number {
   let gptMessage: ChatMessage[];
-
   if (typeof message === "string") {
     gptMessage = [{ role: "user", content: message }];
   } else {
@@ -38,4 +61,3 @@ export default function countTokens(endpoint: Endpoint): number {
 
   return encoded.length;
 }
-

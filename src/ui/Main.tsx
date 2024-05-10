@@ -11,8 +11,8 @@ import Start from "./Start";
 import classes from "./main.module.css";
 import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
-import { isEmpty } from "lodash";
-import countTokens from "./helpers/count-tokens";
+import {  isEmpty } from "lodash"; //get,
+import estimateEndpointTokens from "./helpers/count-tokens";
 import { getEndpointIdentifier, mergeDescriptions } from "../lib/description-helpers/description-handlers";
 import { describeApiEndpoint, describeRequestBodySchemaParameters, describeResponseBodySchemaParameters, describeQueryParameters } from "../lib/describe-endpoints"; // describeRequestHeaders,
 
@@ -22,7 +22,7 @@ function Main() {
   const [endpoints, setEndpoints] = useState<Array<Endpoint>>([]);
 
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
-  const [endpointTokenCounts, setEndpointTokenCounts] = useState({});
+  const [endpointTokenCounts, setEndpointTokenCounts] = useState<TokenCounts>({});
   const [endpointsByHost, setEndpointsByHost] = useState<EndpointsByHost>([]);
 
   const [endpointDescriptions, setEndpointDescriptions] = useState<Record<string, string>>({});
@@ -56,7 +56,6 @@ function Main() {
               if (!requestStore.getEndpointDescriptions()[id]) {
                 setSpecEndpoints();
               }
-              fetchTokenCounts();
               if (host && !allHosts.has(host)) {
                 setAllHosts((prev) => new Set(prev).add(host));
               }
@@ -82,22 +81,31 @@ function Main() {
     };
   }, []);
 
-  const fetchTokenCounts = useCallback(async () => {
-    const currentEndpoints = requestStore.endpoints();
-      setEndpoints(currentEndpoints);
-      const newTokenCounts: TokenCounts = {};
-      for (const endpoint of currentEndpoints) {
-        const identifier = getEndpointIdentifier(endpoint);
-        const tokenCount = await countTokens(endpoint);
-        const inputTokenCost = tokenCount * 0.00003;
-        const outputTokenCost = tokenCount * 0.00006 * 0.001;
-        newTokenCounts[identifier] = Math.round((inputTokenCost + outputTokenCost) * 100) / 100;
-      }
-    setEndpointTokenCounts(newTokenCounts);}, [selectedEndpoints]);
+  const fetchTokenCounts = async (endpoint: Endpoint) => {
+      
+      const newTokenCounts = requestStore.getEndpointTokenCounts();
+      const identifier = getEndpointIdentifier(endpoint);
+      const tokenCount = await estimateEndpointTokens(endpoint);
+      // const tokenCount = 1000;
+      const inputTokenCost = tokenCount * 0.00003;
+      const outputTokenCost = tokenCount * 0.00006 * 0.001;
+      newTokenCounts[identifier] = Math.round((inputTokenCost + outputTokenCost) * 100) / 100;
+    
+    setEndpointTokenCounts(newTokenCounts);
+    requestStore.setEndpointTokenCounts(newTokenCounts);
+  };
 
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
     const updatedEndpoints = mergeDescriptions(nextEndpoints);
+
+    for (const endpoint of nextEndpoints) {
+      const identifier = getEndpointIdentifier(endpoint);
+
+      if (endpointTokenCounts[identifier] === 0 || !endpointTokenCounts[identifier] || endpointTokenCounts[identifier] === undefined) {
+        fetchTokenCounts(endpoint);
+      }
+    }
     setEndpoints(sortEndpoints(updatedEndpoints));
 
     setSpec(
@@ -191,9 +199,15 @@ function Main() {
         if (description !== null) {
           descriptions[id] = description;
         }
-        requestBodySchemaParams[id] = await describeRequestBodySchemaParameters(endpoint, descriptions[id], 'gpt-4');
-        responseBodySchemaParams[id] = await describeResponseBodySchemaParameters(endpoint, descriptions[id], 'gpt-4');
-        queryParams[id] = await describeQueryParameters(endpoint, descriptions[id], 'gpt-4');
+        const [requestBodySchemaDescription, responseBodySchemaDescription, queryParamDescription] = await Promise.all([
+          describeRequestBodySchemaParameters(endpoint, descriptions[id], 'gpt-4'),
+          describeResponseBodySchemaParameters(endpoint, descriptions[id], 'gpt-4'),
+          describeQueryParameters(endpoint, descriptions[id], 'gpt-4')
+        ]);
+
+        requestBodySchemaParams[id] = requestBodySchemaDescription;
+        responseBodySchemaParams[id] = responseBodySchemaDescription;
+        queryParams[id] = queryParamDescription;
       }
     }
     requestStore.setEndpointDescriptions(descriptions);
