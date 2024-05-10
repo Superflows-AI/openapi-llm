@@ -2,7 +2,7 @@ import { Endpoint } from "../utils/types";
 import type { Schema } from "genson-js";
 import { methodDetailsToString, schemaToString, truncateExample, capitalizeFirstLetter, getParameterExample, getResponseParameterExample } from "./description-helpers/endpoint-parsers" //getQueryParameterExample 
 import { endpointSystemPrompt, parameterSystemPrompt, endpointDescriptionPrompt, parameterDescriptionPrompt } from "./description-helpers/prompts";
-import callOpenAI from "./callOpenAI";
+import { callOpenAI, exponentialRetryWrapper} from "./callOpenAI";
 
 
 export function getEndpointPrompt (endpoint: Endpoint): string {
@@ -13,14 +13,14 @@ export function getEndpointPrompt (endpoint: Endpoint): string {
   return endpointDescriptionPrompt(methodsString);;
 }
 
-
 export async function describeApiEndpoint(endpoint: Endpoint, model: string): Promise<string | null> {
 
   const endpointPrompt = getEndpointPrompt(endpoint);
 
-  console.log('Endpoint prompt:', endpointPrompt)
   try {
-    const endpointDescription = await callOpenAI(endpointPrompt, endpointSystemPrompt, model);
+
+    const endpointDescription = await exponentialRetryWrapper(callOpenAI, [endpointPrompt, endpointSystemPrompt, model], 5)
+
     if (endpointDescription.choices && endpointDescription.choices.length > 0 && endpointDescription.choices[0].message) {
       
       const content = endpointDescription.choices[0].message.content;
@@ -101,9 +101,8 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
 
   for (const parentPath in paramPrompts) {
     try {
-      console.log('Parent Path:', parentPath);
-      console.log('Req Param prompt:', paramPrompts[parentPath]);
-      const paramDescription = await callOpenAI(paramPrompts[parentPath], parameterSystemPrompt, model);
+
+      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], parameterSystemPrompt, model], 5)
 
       if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
         const content = paramDescription.choices[0].message.content;
@@ -119,34 +118,53 @@ export async function describeRequestBodySchemaParameters(endpoint: Endpoint, en
           parameterDescriptions[parentPath] = null;
         }
       }
-  console.log('REQ PARAM Descriptions:', parameterDescriptions)
   return parameterDescriptions;
 }
 
 export function getResponseBodyPrompts(endpoint: Endpoint, endpointDescription: string) : Record<string, string> {
   const endpointId = `${endpoint.host}${endpoint.pathname}`;
   const parameterPrompts: Record<string, string> = {};
-  
+  console.log('ENDPOINT:', endpoint);
+
+  // TRAVERSE SCHEMA IS RETURNING TO EARLY WHEN IT FINDS AN ARRAY
+
   async function traverseSchema(schema: Schema, parentPath: string) {
     if (schema.type === 'object') {
       if (schema.properties) {
         for (const [paramName, paramSchema] of Object.entries(schema.properties)) {
+          // If the currentschema has properties, go through the properties and recall traverseSchema
+
           const fullParamPath = `${parentPath}|properties|${paramName}`;
           traverseSchema(paramSchema, fullParamPath);
-        }
-      } 
+        } 
+      } else if (schema.items) {
+          const fullParamPath = `${parentPath}`;
+          traverseSchema(schema.items, fullParamPath);
+      }
     } else if (schema.type === 'array') {
-        let example = truncateExample(getParameterExample(endpoint, parentPath), parentPath);
-        if (typeof example !== 'string'){
-          example = JSON.stringify(example);
-        }
+        // If the current schema is type array, unless the schema has items, get the example 
+        // If the schema has items, recall traverseSchema
         if (schema.items) {
           const fullParamPath = `${parentPath}|items`;
           traverseSchema(schema.items, fullParamPath);
+        } else {
+          traverseSchema(schema, parentPath);
         }
+        // TODO: I don't think this does anything
+        // let example = truncateExample(getResponseParameterExample(endpoint, parentPath), parentPath);
+
+        // if (typeof example !== 'string'){
+        //   example = JSON.stringify(example);
+        // }
+        
       }
     else {
+      // If the schema is not an object or array, get the example
 
+      // TODO: This seems to fail if the example is an array of objects
+      // Probably isn't included in the path?
+      console.log('Endpoint:', endpoint);
+      console.log('Response parentPath', parentPath);
       let example = truncateExample(getResponseParameterExample(endpoint, parentPath), parentPath);
       if (typeof example !== 'string'){
         example = JSON.stringify(example);
@@ -157,6 +175,8 @@ export function getResponseBodyPrompts(endpoint: Endpoint, endpointDescription: 
       parameterPrompts[parentPath] = paramPrompt;
     }
   }
+
+  // THE PATHS HERE COULD BE INCORRECT
 
   for (const methodType of Object.keys(endpoint.data.methods)) {
     const method = endpoint.data.methods[methodType];
@@ -182,9 +202,8 @@ export async function describeResponseBodySchemaParameters(endpoint: Endpoint, e
   for (const parentPath in paramPrompts) {
 
     try {
-      console.log('Parent Path:', parentPath);
       const paramPrompt = paramPrompts[parentPath];
-      const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model); 
+      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, parameterSystemPrompt, model], 5);
 
       if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
         const content = paramDescription.choices[0].message.content;
@@ -251,7 +270,7 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
     const paramPrompt = paramPrompts[paramPath];
 
     try {
-      const paramDescription = await callOpenAI(paramPrompt, parameterSystemPrompt, model);
+      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, parameterSystemPrompt, model], 5);
       if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
         const content = paramDescription.choices[0].message.content;
         const capContent = capitalizeFirstLetter(content);

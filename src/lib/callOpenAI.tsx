@@ -1,6 +1,33 @@
 import OpenAI from 'openai';
 
-export default async function callOpenAI(userPrompt: string, systemPrompt: string, model: string) {
+
+export async function exponentialRetryWrapper<Args extends Array<any>, Output>(
+  func: (...args: Args) => Promise<Output>,
+  args: Args,
+  retries: number,
+): Promise<Output> {
+  const t1 = Date.now();
+  try {
+    const res = await func(...args);
+    console.log(
+      `Exponential retry wrapper completed in ${
+        Date.now() - t1
+      } ms. Retries remaining: ${retries - 1}`,
+    );
+    return res;
+  } catch (error) {
+    console.log(`Error in exponentialRetryWrapper. The error is: ${error}}`);
+    if (retries > 0) {
+      console.log(`Retrying ${func.name} in ${2 ** (10 - retries)}ms`);
+      await new Promise((r) => setTimeout(r, 2 ** (10 - retries)));
+      return await exponentialRetryWrapper(func, args, retries - 1);
+    } else {
+      throw error;
+    }
+  }
+}
+
+export async function callOpenAI(userPrompt: string, systemPrompt: string, model: string) {
 
   const apiKey: string | null = localStorage.getItem('OPENAI_API_KEY');
 
@@ -25,3 +52,4 @@ export default async function callOpenAI(userPrompt: string, systemPrompt: strin
     throw new Error('API key not found');
   }
 }
+
