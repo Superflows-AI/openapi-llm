@@ -1,5 +1,5 @@
 import { Endpoint } from "../../utils/types";
-import { getEndpointPrompt, getQueryParameterPrompts, getResponseBodyPrompts, getRequestBodyParameterPrompts } from "../../lib/describe-endpoints";
+import { getEndpointPrompt, getQueryParameterPrompts, getResponseBodyParameterPrompts, getRequestBodyParameterPrompts } from "../../lib/describe-endpoints";
 import tokenizer from "gpt-tokenizer";
 
 
@@ -13,39 +13,27 @@ export default function estimateEndpointTokens(endpoint: Endpoint): number {
 
   const endpointPrompt = getEndpointPrompt(endpoint);
   const queryParameterPrompts = getQueryParameterPrompts(endpoint, endpointPrompt);
-  const responseBodyPrompts = getResponseBodyPrompts(endpoint, endpointPrompt);
+  const responseBodyPrompts = getResponseBodyParameterPrompts(endpoint, endpointPrompt);
   const requestBodyParameterPrompts = getRequestBodyParameterPrompts(endpoint, endpointPrompt);
 
   const nReqPrompts = Object.keys(responseBodyPrompts).length;
-  const exampleRequestPrompt = responseBodyPrompts[Object.keys(responseBodyPrompts)[0]];
-
   const nResPrompts = Object.keys(requestBodyParameterPrompts).length;
-  const exampleResponsePrompt = requestBodyParameterPrompts[Object.keys(requestBodyParameterPrompts)[0]];
-
   const nQueryPrompts = Object.keys(queryParameterPrompts).length;
-  const exampleQueryPrompt = queryParameterPrompts[Object.keys(queryParameterPrompts)[0]];
+
+
+  const avgParameterPromptTokens = 203;
 
   const endpointTokens = countTokens(endpointPrompt);
-  const estimatedResponseTokens = countTokens(exampleResponsePrompt) * nResPrompts;
-  const estimatedRequestTokens = countTokens(exampleRequestPrompt) * nReqPrompts;
-  const estimatedQueryTokens = countTokens(exampleQueryPrompt) * nQueryPrompts;
 
-  // console.log('ENDPOINT:', endpoint);
+  const parameterInputTokens = (nReqPrompts + nResPrompts + nQueryPrompts) * avgParameterPromptTokens;
 
-  // console.log("Query parameter prompts: ",Object.keys(queryParameterPrompts));
-  // console.log("Response body prompts: ", Object.keys(responseBodyPrompts));
-  // console.log("Request body parameter prompts: ", Object.keys(requestBodyParameterPrompts));
+  const endpointInputTokenCost = endpointTokens * 0.00003;
+  const parameterInputTokenCost = parameterInputTokens * 0.0000005;
+  const endpointOutputTokenCost = 23 * 0.00006;
+  const parameterOutputTokenCost = (nReqPrompts + nResPrompts + nQueryPrompts) * 23 * 0.0000005; 
+  const totalTokenCost = Math.round((endpointInputTokenCost + parameterInputTokenCost + endpointOutputTokenCost + parameterOutputTokenCost) * 100) / 100;
 
-  // console.log("Endpoint tokens: ", endpointTokens);
-  // console.log("Estimated response tokens: ", estimatedResponseTokens);
-  // console.log("Estimated request tokens: ", estimatedRequestTokens);
-  // console.log("Estimated query tokens: ", estimatedQueryTokens);
-
-  // console.log('nReqPrompts: ', nReqPrompts);
-  // console.log('nResPrompts: ', nResPrompts);
-  // console.log('nQueryPrompts: ', nQueryPrompts);
-
-  return endpointTokens + estimatedResponseTokens + estimatedRequestTokens + estimatedQueryTokens;
+  return totalTokenCost;
 }
 
 function countTokens(message: string): number {

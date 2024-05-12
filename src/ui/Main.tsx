@@ -14,7 +14,7 @@ import { sortEndpoints } from './helpers/endpoints-by-host';
 import {  isEmpty } from "lodash"; //get,
 import estimateEndpointTokens from "./helpers/count-tokens";
 import { getEndpointIdentifier, mergeDescriptions } from "../lib/description-helpers/description-handlers";
-import { describeApiEndpoint, describeRequestBodySchemaParameters, describeResponseBodySchemaParameters, describeQueryParameters } from "../lib/describe-endpoints"; // describeRequestHeaders,
+import { describeApiEndpoint, describeRequestBodyParameters, describeResponseBodyParameters, describeQueryParameters } from "../lib/describe-endpoints"; // describeRequestHeaders,
 
 
 function Main() {
@@ -85,11 +85,10 @@ function Main() {
       
       const newTokenCounts = requestStore.getEndpointTokenCounts();
       const identifier = getEndpointIdentifier(endpoint);
-      const tokenCount = await estimateEndpointTokens(endpoint);
+      const tokenCost = await estimateEndpointTokens(endpoint);
       // const tokenCount = 1000;
-      const inputTokenCost = tokenCount * 0.00003;
-      const outputTokenCost = tokenCount * 0.00006 * 0.001;
-      newTokenCounts[identifier] = Math.round((inputTokenCost + outputTokenCost) * 100) / 100;
+
+      newTokenCounts[identifier] = tokenCost;
     
     setEndpointTokenCounts(newTokenCounts);
     requestStore.setEndpointTokenCounts(newTokenCounts);
@@ -199,10 +198,11 @@ function Main() {
         if (description !== null) {
           descriptions[id] = description;
         }
+
         const [requestBodySchemaDescription, responseBodySchemaDescription, queryParamDescription] = await Promise.all([
-          describeRequestBodySchemaParameters(endpoint, descriptions[id], 'gpt-4'),
-          describeResponseBodySchemaParameters(endpoint, descriptions[id], 'gpt-4'),
-          describeQueryParameters(endpoint, descriptions[id], 'gpt-4')
+          describeRequestBodyParameters(endpoint, descriptions[id], 'gpt-4'),
+          describeResponseBodyParameters(endpoint, descriptions[id], 'gpt-3.5-turbo'),
+          describeQueryParameters(endpoint, descriptions[id], 'gpt-3.5-turbo')
         ]);
 
         requestBodySchemaParams[id] = requestBodySchemaDescription;

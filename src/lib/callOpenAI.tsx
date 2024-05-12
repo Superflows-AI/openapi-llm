@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 
-
 export async function exponentialRetryWrapper<Args extends Array<any>, Output>(
   func: (...args: Args) => Promise<Output>,
   args: Args,
