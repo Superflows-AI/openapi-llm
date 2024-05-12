@@ -10,7 +10,7 @@ export function getEndpointPrompt (endpoint: Endpoint): string {
   .map(([method, details]) => `${method.toUpperCase()}: ` + methodDetailsToString(details))
   .join('\n');
 
-  return endpointDescriptionPrompt(methodsString);;
+  return endpointDescriptionPrompt(methodsString);
 }
 
 export async function describeApiEndpoint(endpoint: Endpoint, model: string): Promise<string | null> {
@@ -42,14 +42,14 @@ export function getRequestBodyParameterPrompts(endpoint: Endpoint, endpointDescr
   const endpointId = `${endpoint.host}${endpoint.pathname}`;
   const parameterPrompts: Record<string, string> = {};
 
-  const paramPaths = getParameterPaths(endpoint);;
+  const paramPaths = getParameterPaths(endpoint);
 
   paramPaths.forEach((paramPath) => {
     const splitPath = paramPath.split('|');
     const reqres = splitPath[1];
 
     if (reqres === 'request') {
-      let example = truncateExample(getExample(endpoint, paramPath), paramPath);
+      const example = truncateExample(getExample(endpoint, paramPath), paramPath);
       const exampleType = typeof example;
 
       const paramExample = JSON.stringify(example);
@@ -99,7 +99,7 @@ export function getResponseBodyParameterPrompts(endpoint: Endpoint, endpointDesc
     const reqres = splitPath[1];
 
     if (reqres === 'response') {
-      let example = truncateExample(getExample(endpoint, paramPath), paramPath);
+      const example = truncateExample(getExample(endpoint, paramPath), paramPath);
       const exampleType = typeof example;
 
       const paramExample = JSON.stringify(example);

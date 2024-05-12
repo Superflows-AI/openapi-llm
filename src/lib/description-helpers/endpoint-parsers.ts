@@ -129,7 +129,7 @@ export function getExample(endpoint: Endpoint, parameterPath: string): unknown {
   const currentMethod = endpoint.data.methods[methodType];
 
   // Declare currentContentType without initialization here.
-  let currentContentType: { body?: any; mostRecent?: any } | undefined;
+  let currentContentType: { body?: unknown; mostRecent?: unknown } | undefined;
 
   if (requestResponseType === 'request') {
     const currentReqRes = currentMethod.request;
@@ -163,7 +163,7 @@ export function getExample(endpoint: Endpoint, parameterPath: string): unknown {
       } else if (Array.isArray(currentObj)) {
         // Handle arrays: Search within each object in the array for the key
         let found = false;
-        for (let item of currentObj) {
+        for (const item of currentObj) {
           if (part in item) {
             currentObj = item[part];
             found = true;
