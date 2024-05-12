@@ -205,12 +205,21 @@ export function getParameterPaths(endpoint: Endpoint): Array<string> {
       if (schema.items) {
         const fullParamPath = `${parentPath}|items`;
         traverseSchema(schema.items, fullParamPath);
-      } else {
-        traverseSchema(schema, parentPath);
+      } else if (schema.anyOf && Array.isArray(schema.anyOf)) {
+        const anyOfPath = `${parentPath}|anyOf`;
+        schema.anyOf.forEach((anyOfSchema, index) => {
+        const subPath = `${anyOfPath}|${index}`;
+        traverseSchema(anyOfSchema, subPath);
+      });
       }
     } else {
       parameterPaths.push(parentPath);
     }
+
+    // Adding paths to parameterPaths selectively
+    // if (!schema.properties && !schema.items && !schema.anyOf && (schema.type !== 'array' || schema.items)) {
+    //   parameterPaths.push(parentPath);
+    // }
   }
 
   for (const methodType of Object.keys(endpoint.data.methods)) {
