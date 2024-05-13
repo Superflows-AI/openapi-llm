@@ -7,11 +7,16 @@ RULES:
 
 export function endpointDescriptionPrompt(methodsString: string): string {
 
-  return `Here is an example usage of an API endpoint, including Query Parameters, Request Body and Response Body from an API endpoint: ${methodsString}.
-  
-  Explain how the API endpoint is used without referencing parts of the example. 
+  return `I need to understand how an API endpoint works and what it is used for. 
 
-  ASSISTANT:  This is an endpoint that`;
+  Some good descriptions of endpoints would be:
+  - Retrieves page revisions and information about the page
+  - Search all deals. Includes industry and size of company
+  - Search contacts by name or filter by attributes
+  
+  Here is an example usage of an API endpoint, including Query Parameters, Request Body and Response Body from an API endpoint: ${methodsString}.
+
+  Explain the API in a similar way to the good descriptions provided without including the information shown here. Get straight to the point - do not include anything that is obvious from the information provided.`;
 }
 
 export const parameterSystemPrompt = `You are an expert, articulate programmer. 
@@ -71,13 +76,13 @@ export function responseParameterDescriptionPrompt(endpointId: string, endpointD
   - Date and time of engagement start
   - The last time the specific page was updated from the database 
 
-  Here is information about a reponse parameter from API endpoint, including the type of parameter, example usage, and the API endpoint description:
+  Here is information about a response parameter from API endpoint, including the type of parameter, example usage, and the API endpoint description:
   - ENDPOINT_ID: ${endpointId}
   - ENDPOINT_DESCRIPTION: ${endpointDescription}
   - PATH_TO_PARAMETER: '${parentPath}'
   - TYPE_OF_PARAMETER: '${schema}'
   - EXAMPLE_USAGE: '${example}'
 
-  Explain the request parameter in a similar way to the good descriptions provided without including the information shown here.`;
+  Explain the response parameter in a similar way to the good descriptions provided without including the information shown here.`;
 }
 
