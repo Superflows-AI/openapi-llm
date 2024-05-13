@@ -24,7 +24,7 @@ This project is a fork of OpenAPI Devtools. Check out the <a href="https://githu
 
 <br />
 
-The <a href="https://www.superflows.ai/"> Superflows </a> team extended the functionality of the original tool after building AI assistants using OpenAPI specifications. We found it useful to have natural language descriptions in OpenAPI Specifications, both for human understanding and to increasing the reliability of AI assistants using them to make API calls. 
+The <a href="https://www.superflows.ai/"> Superflows </a> team extended the functionality of the original tool after building AI assistants using OpenAPI specifications. We found it useful to have natural language descriptions in OpenAPI Specifications, both for human understanding and to increasing the reliability of AI assistants using them to make API calls (also recommended elsewhere, such as by [Anthropic](https://docs.anthropic.com/en/docs/tool-use#best-practices-for-tool-definitions)). 
 
 ## About The Project
 
