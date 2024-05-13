@@ -97,11 +97,12 @@ function Main() {
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
     const updatedEndpoints = mergeDescriptions(nextEndpoints);
+    const currentTokenCounts = requestStore.getEndpointTokenCounts();
 
     for (const endpoint of nextEndpoints) {
       const identifier = getEndpointIdentifier(endpoint);
 
-      if (endpointTokenCounts[identifier] === 0 || !endpointTokenCounts[identifier] || endpointTokenCounts[identifier] === undefined) {
+      if (currentTokenCounts[identifier] === 0 || !currentTokenCounts[identifier] || currentTokenCounts[identifier] === undefined) {
         fetchTokenCounts(endpoint);
       }
     }
