@@ -25,21 +25,31 @@ RULES:
 
 export function queryParameterDescriptionPrompt(endpointId: string, endpointDescription: string, parentPath: string, schema: string, example: string): string {
 
-  return `HUMAN:
+  return `I need to understand how a query parameter in an API endpoint works and what it is used for. 
 
-  Here is information about a query parameter in an API endpoint, including the type of parameter, example usage, and the API endpoint description:
+  Some good descriptions of parameters would be:
+  - Filter by > or < the number of employees
+  - Date and time of engagement start
+  - Limit the number of results returned
+
+  Here is information about a query parameter I need to understand, including the type of parameter, example usage, and the API endpoint description:
   - ENDPOINT_ID: ${endpointId}
   - ENDPOINT_DESCRIPTION: ${endpointDescription}
   - PATH_TO_PARAMETER: '${parentPath}'
   - TYPE_OF_PARAMETER: '${schema}'
   - EXAMPLE_USAGE: '${example}'
 
-  Explain how the query parameter works without including the information shown here.`;
+  Explain the query parameter in a similar way to the good descriptions provided without including the information shown here.`;
 }
 
 export function requestParameterDescriptionPrompt(endpointId: string, endpointDescription: string, parentPath: string, schema: string, example: string): string {
 
-  return `HUMAN:
+  return `I need to understand how a request parameter in an API endpoint works and what it is used for. 
+
+  Some good descriptions of parameters would be:
+  - Filter by > or < the number of employees
+  - Date and time of engagement start
+  - Limit the number of results returned
 
   Here is information about a request body parameter in an API endpoint, including the type of parameter, example usage, and the API endpoint description:
   - ENDPOINT_ID: ${endpointId}
@@ -48,13 +58,18 @@ export function requestParameterDescriptionPrompt(endpointId: string, endpointDe
   - TYPE_OF_PARAMETER: '${schema}'
   - EXAMPLE_USAGE: '${example}'
 
-  Explain how the request parameter works without including the information shown here.`;
+  Explain the request parameter in a similar way to the good descriptions provided without including the information shown here.`;
 }
 
 
 export function responseParameterDescriptionPrompt(endpointId: string, endpointDescription: string, parentPath: string, schema: string, example: string): string {
 
-  return `HUMAN:
+  return `I need to understand how a response parameter in an API endpoint works and what it is used for. 
+
+  Some good descriptions of parameters would be:
+  - Value of the deal in USD
+  - Date and time of engagement start
+  - The last time the specific page was updated from the database 
 
   Here is information about a reponse parameter from API endpoint, including the type of parameter, example usage, and the API endpoint description:
   - ENDPOINT_ID: ${endpointId}
@@ -63,6 +78,6 @@ export function responseParameterDescriptionPrompt(endpointId: string, endpointD
   - TYPE_OF_PARAMETER: '${schema}'
   - EXAMPLE_USAGE: '${example}'
 
-  Explain what the response parameter means without including the information shown here. Get straight to the point, do not tell me it's a parameter.`;
+  Explain the request parameter in a similar way to the good descriptions provided without including the information shown here.`;
 }
 
