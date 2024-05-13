@@ -1,58 +1,10 @@
 import type { Schema } from "genson-js";
-import { Endpoint, MethodInstance } from "../../utils/types"; 
+import { Endpoint } from "../../utils/types";
 import tokenizer from "gpt-tokenizer";
 import { ChatMessage } from "../../ui/helpers/count-tokens"; 
-import type { Req, Res } from "../../utils/types";
 
 export type Result = { [key: string]: unknown };
 
-
-export function methodDetailsToString(method: MethodInstance): string {
-  /** Helper function to convert method details into a string **/ 
-
-  const queryParametersString = method.queryParameters
-    ? Object.entries(method.queryParameters.parameters?.properties || {})
-        .map(([paramName, paramSchema]) => {
-          const example = (method.queryParameters?.mostRecent as Record<string, unknown>)?.[paramName];
-          const exampleString = example !== undefined ? JSON.stringify(example) : 'No recent example';
-          const paramType = (paramSchema as { type?: string }).type || 'unknown';
-          return `${paramName}: ${paramType}. ${exampleString}`;
-        })
-        .join('\n')
-    : 'No query parameters';
-
-
-  const requestString = method.request
-    ? Object.entries(method.request as { [mediaType: string]: Req }).map(([mediaType, req]) => {
-        const parsedRequest = req.mostRecent
-          ? JSON.stringify(findExamplesFromJSON(req.mostRecent))
-          : 'No recent example';
-        return `${mediaType}: Summarised Example Request: ${parsedRequest}`;
-      }).join('\n')
-    : 'No request info';
-
-  const responseString = method.response
-    ? Object.entries(method.response as { [statusCode: string]: { [mediaType: string]: Res } }).map(([statusCode, responses]) => {
-        return `${statusCode}: ` + Object.entries(responses).map(([mediaType, res]) => {
-          const mostRecent = res.mostRecent
-            ? JSON.stringify(findExamplesFromJSON(res.mostRecent))
-            : 'No recent sample';
-          return `${mediaType}: Summarised Example Response: ${mostRecent}`;
-        }).join('\n');
-      }).join('\n')
-    : 'No response info';
-
-  return `Query Parameters: \n${queryParametersString}\nRequest:\n${requestString}\nResponse:\n${responseString}`;
-}
-
-export function endpointToString(endpoint: Endpoint): string {
-  const partsString = endpoint.parts.map(part => `${part.part} (type: ${part.type})`).join(', ');
-  const methodsString = Object.entries(endpoint.data.methods).map(([method, details]) => {
-      return `${method.toUpperCase()}: ` + methodDetailsToString(details);
-  }).join('\n');
-
-  return `Pathname: ${endpoint.pathname}\nParts: [${partsString}]\nMethods:\n${methodsString}`;
-}
 
 export function schemaToString(schema: Schema): string {
   /** Helper function to convert schema objects into a string representation **/
@@ -151,7 +103,7 @@ export function getExample(endpoint: Endpoint, parameterPath: string): unknown {
     return undefined;
   }
 
-  let currentObj: any = currentMostRecent;
+  let currentObj: unknown = currentMostRecent;
 
   for (let i = 0; i < mostRecentPath.length; i++) {
     const part = mostRecentPath[i];  // Current part of the path to access
@@ -159,6 +111,8 @@ export function getExample(endpoint: Endpoint, parameterPath: string): unknown {
     if (currentObj && typeof currentObj === 'object') {  // Ensure current object is valid
       if (part in currentObj) {
         // Move deeper into the object structure
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         currentObj = currentObj[part];
       } else if (Array.isArray(currentObj)) {
         // Handle arrays: Search within each object in the array for the key
