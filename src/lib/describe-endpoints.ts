@@ -16,6 +16,8 @@ export function getEndpointPrompt (endpoint: Endpoint): string {
 export async function describeApiEndpoint(endpoint: Endpoint, model: string): Promise<string | null> {
 
   const endpointPrompt = getEndpointPrompt(endpoint);
+  console.log('endpointPrompt:');
+  console.log(endpointPrompt);
 
   try {
 

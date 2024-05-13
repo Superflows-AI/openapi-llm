@@ -96,7 +96,7 @@ function Main() {
 
   const setSpecEndpoints = useCallback(async () => {
     const nextEndpoints = requestStore.endpoints();
-    const updatedEndpoints = mergeDescriptions(nextEndpoints);
+    const updatedEndpoints = mergeDescriptions(nextEndpoints, selectedEndpoints);
     const currentTokenCounts = requestStore.getEndpointTokenCounts();
 
     for (const endpoint of nextEndpoints) {
@@ -121,7 +121,7 @@ function Main() {
     requestStore.setDisabledHosts(disabledHosts);
     setEndpointDescriptions(endpointDescriptions)
     requestStore.setEndpointDescriptions(endpointDescriptions);
-    mergeDescriptions(endpoints);
+    mergeDescriptions(endpoints, selectedEndpoints);
     setSpecEndpoints();
   }, [disabledHosts, endpointDescriptions]);
 
@@ -227,7 +227,7 @@ function Main() {
   }
   useEffect(() => {
     const updatedEndpoints = mergeDescriptions(
-      endpoints)
+      endpoints, selectedEndpoints)
     setSpec(
       endpointsToOAI31(
         updatedEndpoints,
