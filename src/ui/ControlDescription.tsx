@@ -142,8 +142,8 @@ const ControlDescription = () => {
                                 value={`${endpoint.host}${endpoint.pathname}`}
                                 onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}`)}
                               >
-                                {endpoint.pathname} | 
-                                <span className="token-cost"> Est token cost: ~${tokenCount.toFixed(2)}</span>
+                                
+                                <span className="token-cost">{endpoint.pathname} | Est token cost: ~${tokenCount.toFixed(2)}</span>
                               </Checkbox>
                             );
                           })}
