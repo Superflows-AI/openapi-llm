@@ -1,9 +1,49 @@
 import type { Schema } from "genson-js";
-import { Endpoint } from "../../utils/types";
+import { Endpoint, MethodInstance, type Req, type Res } from "../../utils/types";
 import tokenizer from "gpt-tokenizer";
 import { ChatMessage } from "../../ui/helpers/count-tokens"; 
 
 export type Result = { [key: string]: unknown };
+
+export function methodDetailsToString(endpointMethod: MethodInstance, method: string, endpointId: string): string {
+  /** Helper function to convert method details into a string **/
+
+  const queryParametersString = endpointMethod.queryParameters
+    ? "Query Parameters (in TS format):\n{\n" + Object.entries(endpointMethod.queryParameters.parameters?.properties || {})
+        .map(([paramName, paramSchema]) => {
+          const example = (endpointMethod.queryParameters?.mostRecent as Record<string, string>)?.[paramName];
+          const exampleString = example ? " // Example: " + decodeURIComponent(example) : '';
+          const paramType = (paramSchema as { type?: string }).type || 'unknown';
+          return `${paramName}: ${paramType}${exampleString.slice(0, 100)}${exampleString.length > 100 ? "..." : ""}`;
+        })
+        .join('\n') + "\n}"
+    : 'No query parameters';
+
+
+  const requestString = endpointMethod.request
+    ? Object.values(endpointMethod.request as { [mediaType: string]: Req }).map((req) => {
+        const parsedRequest = req.mostRecent
+          ? JSON.stringify(findExamplesFromJSON(req.mostRecent))
+          : 'No recent example';
+        return `\nExample request body:\n${parsedRequest}`;
+      }).join('\n')
+    : 'No request body';
+
+  const responseString = endpointMethod.response
+    ? Object.entries(endpointMethod.response as { [statusCode: string]: { [mediaType: string]: Res } }).map(([statusCode, responses]) => {
+        return Object.values(responses).map((res) => {
+          const mostRecent = res.mostRecent
+            ? JSON.stringify(findExamplesFromJSON(res.mostRecent))
+            : 'No recent sample';
+          return `Example response (status: ${statusCode}):\n${mostRecent}`;
+        }).join('\n');
+      }).join('\n')
+    : 'No response';
+
+  const methodsPrompt = `${method.toUpperCase()}: ${endpointId}\n\n${queryParametersString}\n${requestString}\n\n${responseString}`
+
+  return methodsPrompt;
+}
 
 
 export function schemaToString(schema: Schema): string {
@@ -141,7 +181,7 @@ export function getExample(endpoint: Endpoint, parameterPath: string): unknown {
   return currentObj;
 }
   
-export function getParameterPaths(endpoint: Endpoint): Array<string> {
+export function getParameterPaths(endpointMethod: MethodInstance, method: string): Array<string> {
   const parameterPaths: Array<string> = [];
 
   async function traverseSchema(schema: Schema, parentPath: string) {
@@ -175,24 +215,21 @@ export function getParameterPaths(endpoint: Endpoint): Array<string> {
     //   parameterPaths.push(parentPath);
     // }
   }
-
-  for (const methodType of Object.keys(endpoint.data.methods)) {
-    const method = endpoint.data.methods[methodType];
-    if (method.request) {
-      for (const [contentType, req] of Object.entries(method.request)) {
-        if (req.body) {
-          const paramPath = `${methodType}|request|${contentType}|body`;
-          traverseSchema(req.body, paramPath);
-        }
+  
+  if (endpointMethod.request) {
+    for (const [contentType, req] of Object.entries(endpointMethod.request)) {
+      if (req.body) {
+        const paramPath = `${method}|request|${contentType}|body`;
+        traverseSchema(req.body, paramPath);
       }
     }
-    if (method.response) {
-      for (const [statusCode, responses] of Object.entries(method.response)) {
-        for (const [contentType, res] of Object.entries(responses)) {
-          if (res.body) {
-            const paramPath = `${methodType}|response|${statusCode}|${contentType}|body`;
-            traverseSchema(res.body, paramPath);
-          }
+  }
+  if (endpointMethod.response) {
+    for (const [statusCode, responses] of Object.entries(endpointMethod.response)) {
+      for (const [contentType, res] of Object.entries(responses)) {
+        if (res.body) {
+          const paramPath = `${method}|response|${statusCode}|${contentType}|body`;
+          traverseSchema(res.body, paramPath);
         }
       }
     }

@@ -11,9 +11,9 @@ import Start from "./Start";
 import classes from "./main.module.css";
 import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
-import {  isEmpty } from "lodash"; //get,
+import { isEmpty } from "lodash"; //get,
 import estimateEndpointTokens from "./helpers/count-tokens";
-import { getEndpointIdentifier, mergeDescriptions } from "../lib/description-helpers/description-handlers";
+import { getEndpointIdentifier, getEndpointMethodIdentifier, getAllEndpointMethodIdentifiers, mergeDescriptions } from "../lib/description-helpers/description-handlers";
 import { describeApiEndpoint, describeRequestBodyParameters, describeResponseBodyParameters, describeQueryParameters } from "../lib/describe-endpoints"; // describeRequestHeaders,
 
 
@@ -81,11 +81,11 @@ function Main() {
     };
   }, []);
 
-  const fetchTokenCounts = async (endpoint: Endpoint) => {
+  const fetchTokenCounts = async (endpoint: Endpoint, method: string) => {
       
       const newTokenCounts = requestStore.getEndpointTokenCounts();
       const identifier = getEndpointIdentifier(endpoint);
-      const tokenCost = await estimateEndpointTokens(endpoint);
+      const tokenCost = await estimateEndpointTokens(endpoint, method, identifier);
       // const tokenCount = 1000;
 
       newTokenCounts[identifier] = tokenCost;
@@ -100,10 +100,12 @@ function Main() {
     const currentTokenCounts = requestStore.getEndpointTokenCounts();
 
     for (const endpoint of nextEndpoints) {
-      const identifier = getEndpointIdentifier(endpoint);
+      for (const method in endpoint.data.methods) {
+        const identifier = getEndpointMethodIdentifier(endpoint, method);
 
-      if (!currentTokenCounts[identifier]) {
-        fetchTokenCounts(endpoint);
+        if (!currentTokenCounts[identifier]) {
+          fetchTokenCounts(endpoint, method);
+        }
       }
     }
     setEndpoints(sortEndpoints(updatedEndpoints));
@@ -193,9 +195,11 @@ function Main() {
     setDescriptionsLoading(DescriptionStatus.ACTIVE);
 
     for (const id of selectedEndpoints) {
-      const endpoint = endpoints.find(ep => getEndpointIdentifier(ep) === id);
+
+      const endpoint = endpoints.find(ep => getAllEndpointMethodIdentifiers(ep).includes(id));
       if (endpoint) {
-        const description = await describeApiEndpoint(endpoint, 'gpt-4');
+        const method = id.split('/').pop() as string;
+        const description = await describeApiEndpoint(endpoint, method, 'gpt-4');
         if (description !== null) {
           descriptions[id] = description;
         }
@@ -209,8 +213,9 @@ function Main() {
         requestBodySchemaParams[id] = requestBodySchemaDescription;
         responseBodySchemaParams[id] = responseBodySchemaDescription;
         queryParams[id] = queryParamDescription;
-      }
-    }
+        }
+      };
+
     requestStore.setEndpointDescriptions(descriptions);
     requestStore.setRequestBodySchemaParamDescriptions(requestBodySchemaParams);
     requestStore.setResponseBodySchemaParamDescriptions(responseBodySchemaParams);

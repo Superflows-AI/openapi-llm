@@ -17,7 +17,7 @@ describe('getParameterPaths', () => {
         'POST|response|200|application/json|body|properties|items|items|properties|products|items|properties|price',
     ];
 
-    const parameterPaths = getParameterPaths(endpoint);
+    const parameterPaths = getParameterPaths(endpoint.data.methods['POST'], 'POST');
     expect(parameterPaths).toEqual(expectedPaths);
   });
 });

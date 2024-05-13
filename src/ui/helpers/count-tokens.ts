@@ -1,12 +1,6 @@
-import {Endpoint} from "../../utils/types";
-import {
-  getQueryParameterPrompts,
-  getRequestBodyParameterPrompts,
-  getResponseBodyParameterPrompts
-} from "../../lib/describe-endpoints";
+import { Endpoint } from "../../utils/types";
+import { getEndpointMethodPrompt, getQueryParameterPrompts, getResponseBodyParameterPrompts, getRequestBodyParameterPrompts } from "../../lib/describe-endpoints";
 import tokenizer from "gpt-tokenizer";
-import {getEndpointPrompt} from "../../lib/description-helpers/endpoint-prompt.ts";
-
 
 export interface ChatMessage {
   role?: 'system' | 'user' | 'assistant'
@@ -14,18 +8,21 @@ export interface ChatMessage {
   content: string
 }
 
-export default function estimateEndpointTokens(endpoint: Endpoint): number {
+// endpoint: Endpoint, method: string, endpointDescription: string
 
-  const endpointPrompt = getEndpointPrompt(endpoint);
-  const queryParameterPrompts = getQueryParameterPrompts(endpoint, endpointPrompt);
-  const responseBodyPrompts = getResponseBodyParameterPrompts(endpoint, endpointPrompt);
-  const requestBodyParameterPrompts = getRequestBodyParameterPrompts(endpoint, endpointPrompt);
+export default function estimateEndpointMethodTokens(endpoint: Endpoint, method: string, endpointId: string): number {
+  // NEED TO UPDATE THIS TO THE ENDPOINT METHOD 
+  const mockEndpointMethodDescription = 'An example endpoint description of approximately the correct length'
+  const endpointMethodPrompt = getEndpointMethodPrompt(endpoint.data.methods[method], method, endpointId);
+  const queryParameterPrompts = getQueryParameterPrompts(endpoint, method, mockEndpointMethodDescription)
+  const responseBodyPrompts = getResponseBodyParameterPrompts(endpoint, method, mockEndpointMethodDescription)
+  const requestBodyParameterPrompts =getRequestBodyParameterPrompts(endpoint, method, mockEndpointMethodDescription)
 
   const nReqPrompts = Object.keys(responseBodyPrompts).length;
   const nResPrompts = Object.keys(requestBodyParameterPrompts).length;
   const nQueryPrompts = Object.keys(queryParameterPrompts).length;
 
-  const endpointTokens = countTokens(endpointPrompt);
+  const endpointTokens = countTokens(endpointMethodPrompt);
 
   // GPT4
   const endpointInputTokenCost = endpointTokens * 0.00003;

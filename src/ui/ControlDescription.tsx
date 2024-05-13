@@ -19,6 +19,7 @@ import { Endpoint, DescriptionStatus } from "../utils/types"
 import Context from "./context";
 import classes from "./controlDynamic.module.css";
 
+
 interface EndpointsByHost {
   [host: string]: Endpoint[];
 }
@@ -133,20 +134,20 @@ const ControlDescription = () => {
                       >
                         <VStack align="stretch" spacing={4}>
                           {endpoints.map((endpoint) => {
-                            const endpointKey = `${endpoint.host}${endpoint.pathname}`;
-                            const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
-                            const roundedTokenCount = Math.round(tokenCount * 100) / 100;
-                            
-                            return (
-                              <Checkbox
-                                key={`${endpoint.host}${endpoint.pathname}`}
-                                value={`${endpoint.host}${endpoint.pathname}`}
-                                onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}`)}
-                              >
-                                
-                                <span className="token-cost">{endpoint.pathname} | Est token cost: ~${roundedTokenCount.toFixed(2)}</span>
-                              </Checkbox>
-                            );
+                            return Object.keys(endpoint.data.methods).map((method) => {
+                              const endpointKey = `${endpoint.host}${endpoint.pathname}`;
+                              const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
+                              const roundedTokenCount = Math.round(tokenCount * 100) / 100;
+                              return ( 
+                                <Checkbox
+                                  key={`${endpoint.host}${endpoint.pathname}/${method}`}
+                                  value={`${endpoint.host}${endpoint.pathname}/${method}`}
+                                  onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}/${method}`)}
+                                >
+                                  <span className="token-cost">{`${endpoint.host}${endpoint.pathname}/${method} | Est token cost: ~${roundedTokenCount.toFixed(2)}`}</span>
+                                </Checkbox>
+                              );
+                            });
                           })}
                         </VStack>
                       </CheckboxGroup>

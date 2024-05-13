@@ -69,7 +69,6 @@ export const createRequestTypes = (
 
 type ResponseType = Leaf["methods"]["get"]["response"];
 
-
 export const createResponseTypes = (
   responseType: ResponseType,
   headers: Schema | undefined,
@@ -77,6 +76,7 @@ export const createResponseTypes = (
 ) => {
   // Create response headers
   const headersObject: HeadersObject = {};
+
   if (headers && headers.properties) {
     Object.entries(headers.properties).forEach(([name, schema]) => {
       const headerObj: HeaderObject = {
@@ -89,6 +89,7 @@ export const createResponseTypes = (
 
   // Initialise responses object, set response objects from status codes
   const responsesObject: ResponsesObject = {};
+  
   Object.entries(responseType).forEach(([statusCode, mediaTypeObj]) => {
     Object.entries(mediaTypeObj).forEach(([mediaType, data]) => {
       const contentObject: ContentObject = {};
@@ -107,7 +108,6 @@ export const createResponseTypes = (
 
   return responsesObject;
 };
-
 export const createBuilderAndDocRoot = (
   endpoints: Array<Endpoint>,
 ): OpenApiBuilder => {
