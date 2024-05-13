@@ -14,7 +14,7 @@ export function endpointDescriptionPrompt(methodsString: string): string {
   - Search all deals. Includes industry and size of company
   - Search contacts by name or filter by attributes
   
-  Here is an example usage of an API endpoint, including Query Parameters, Request Body and Response Body from an API endpoint: ${methodsString}.
+  Here is an example usage of an API endpoint, including Query Parameters, Request Body and Response Body: ${methodsString}.
 
   Explain the API endpoint in a similar way to the good descriptions provided without including the information shown here. Get straight to the point - do not include anything that is obvious from the information provided.`;
 }
