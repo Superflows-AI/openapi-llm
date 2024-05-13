@@ -61,32 +61,38 @@ export function getRequestBodyParameterPrompts(endpoint: Endpoint, method: strin
 
 export async function describeRequestBodyParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {}; 
+  const descriptionPromises = [];
 
   for (const method in endpoint.data.methods) {
     const paramPrompts = getRequestBodyParameterPrompts(endpoint, method, endpointDescription);
 
     for (const parentPath in paramPrompts) {
-      try {
-        const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5)
-  
-        if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          const content = paramDescription.choices[0].message.content;
-          parameterDescriptions[parentPath] = capitalizeFirstLetter(content);
+      // Generate promises and store them in an array for parallel processing
+      const descriptionPromise = exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5)
+        .then(paramDescription => {
+          if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
+            const content = paramDescription.choices[0].message.content;
+            parameterDescriptions[parentPath] = capitalizeFirstLetter(content);
           } else {
             console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
             parameterDescriptions[parentPath] = null;
           }
-  
-          } catch (error) {
-            console.error(`Error describing parameter '${parentPath}':`, error);
-            parameterDescriptions[parentPath] = null;
-          }
-        }
-    };
+        })
+        .catch(error => {
+          console.error(`Error describing parameter '${parentPath}':`, error);
+          parameterDescriptions[parentPath] = null;
+        });
 
-  // const paramPrompts = getRequestBodyParameterPrompts(endpoint, endpointDescription);
+      descriptionPromises.push(descriptionPromise);
+    }
+  }
+
+  // Wait for all promises to resolve
+  await Promise.all(descriptionPromises);
+
   return parameterDescriptions;
 }
+
 
 export function getResponseBodyParameterPrompts(endpoint: Endpoint, method: string, endpointDescription: string): Record<string, string> {
   
@@ -112,31 +118,35 @@ export function getResponseBodyParameterPrompts(endpoint: Endpoint, method: stri
 
 export async function describeResponseBodyParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
-
+  const descriptionPromises = [];
 
   for (const method in endpoint.data.methods) {
-
     const paramPrompts = getResponseBodyParameterPrompts(endpoint, method, endpointDescription);
-    for (const parentPath in paramPrompts) {
 
-      try {
-        const paramPrompt = paramPrompts[parentPath];
-        const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5);
-  
-        if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          const content = paramDescription.choices[0].message.content;
-          parameterDescriptions[parentPath] = capitalizeFirstLetter(content);
-        } else {
-          console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
-          parameterDescriptions[parentPath] = null;
-        }
-  
-        } catch (error) {
+    for (const parentPath in paramPrompts) {
+      // Create a promise for each API call and add it to the array
+      const descriptionPromise = exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5)
+        .then(paramDescription => {
+          if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
+            const content = paramDescription.choices[0].message.content;
+            parameterDescriptions[parentPath] = capitalizeFirstLetter(content);
+          } else {
+            console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
+            parameterDescriptions[parentPath] = null;
+          }
+        })
+        .catch(error => {
           console.error(`Error describing parameter '${parentPath}':`, error);
           parameterDescriptions[parentPath] = null;
-        }
-      }
+        });
+
+      descriptionPromises.push(descriptionPromise);
     }
+  }
+
+  // Wait for all promises to resolve
+  await Promise.all(descriptionPromises);
+
   return parameterDescriptions;
 }
 
@@ -178,28 +188,37 @@ export function getQueryParameterPrompts(endpoint: Endpoint, method: string, end
 
 export async function describeQueryParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
+  const descriptionPromises = [];
 
   for (const method in endpoint.data.methods) {
-
     const paramPrompts = getQueryParameterPrompts(endpoint, method, endpointDescription);
 
     for (const paramPath in paramPrompts) {
       const paramPrompt = paramPrompts[paramPath];
 
-      try {
-        const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5);
-        if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
-          const content = paramDescription.choices[0].message.content;
-          parameterDescriptions[paramPath] = capitalizeFirstLetter(content);
-        } else {
-          console.warn(`Unexpected OpenAI response format for parameter '${paramPath}':`, paramDescription);
+      // Collect each API call as a promise in an array
+      const descriptionPromise = exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5)
+        .then(paramDescription => {
+          if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
+            const content = paramDescription.choices[0].message.content;
+            parameterDescriptions[paramPath] = capitalizeFirstLetter(content);
+          } else {
+            console.warn(`Unexpected OpenAI response format for parameter '${paramPath}':`, paramDescription);
+            parameterDescriptions[paramPath] = null;
+          }
+        })
+        .catch(error => {
+          console.error(`Error describing parameter '${paramPath}':`, error);
           parameterDescriptions[paramPath] = null;
-        }
-      } catch (error) {
-        console.error(`Error describing parameter '${paramPath}':`, error);
-        parameterDescriptions[paramPath] = null;
-      };
-    };
-  };
+        });
+
+      descriptionPromises.push(descriptionPromise);
+    }
+  }
+
+  // Wait for all the promises to resolve
+  await Promise.all(descriptionPromises);
+
   return parameterDescriptions;
 }
+
