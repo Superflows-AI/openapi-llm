@@ -63,8 +63,7 @@ const endpointsToOAI31 = (
       const responses = createResponseTypes(
         endpointMethod.response,
         endpointMethod.responseHeaders,
-        options,
-        endpoint.description
+        options
       );
       const security: SecurityRequirementObject[] = [];
       if (!isEmpty(endpoint.data.authentication)) {

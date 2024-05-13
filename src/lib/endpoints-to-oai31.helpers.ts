@@ -73,8 +73,7 @@ type ResponseType = Leaf["methods"]["get"]["response"];
 export const createResponseTypes = (
   responseType: ResponseType,
   headers: Schema | undefined,
-  options: Options,
-  endpointDescription?: string
+  options: Options
 ) => {
   // Create response headers
   const headersObject: HeadersObject = {};
@@ -100,7 +99,6 @@ export const createResponseTypes = (
       contentObject[mediaType] = mediaTypeObject;
       const responseObject: ResponseObject = {
         content: contentObject,
-        description: endpointDescription || "",
         headers: headersObject,
       };
       responsesObject[statusCode] = responseObject;
