@@ -16,7 +16,7 @@ export function endpointDescriptionPrompt(methodsString: string): string {
   
   Here is an example usage of an API endpoint, including Query Parameters, Request Body and Response Body from an API endpoint: ${methodsString}.
 
-  Explain the API in a similar way to the good descriptions provided without including the information shown here. Get straight to the point - do not include anything that is obvious from the information provided.`;
+  Explain the API endpoint in a similar way to the good descriptions provided without including the information shown here. Get straight to the point - do not include anything that is obvious from the information provided.`;
 }
 
 export const parameterSystemPrompt = `You are an expert, articulate programmer. 
