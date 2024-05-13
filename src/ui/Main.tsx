@@ -102,7 +102,7 @@ function Main() {
     for (const endpoint of nextEndpoints) {
       const identifier = getEndpointIdentifier(endpoint);
 
-      if (currentTokenCounts[identifier] === 0 || !currentTokenCounts[identifier] || currentTokenCounts[identifier] === undefined) {
+      if (!currentTokenCounts[identifier]) {
         fetchTokenCounts(endpoint);
       }
     }

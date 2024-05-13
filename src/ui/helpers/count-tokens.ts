@@ -20,7 +20,6 @@ export default function estimateEndpointTokens(endpoint: Endpoint): number {
   const nResPrompts = Object.keys(requestBodyParameterPrompts).length;
   const nQueryPrompts = Object.keys(queryParameterPrompts).length;
 
-
   const avgParameterPromptTokens = 203;
 
   const endpointTokens = countTokens(endpointPrompt);
@@ -31,7 +30,7 @@ export default function estimateEndpointTokens(endpoint: Endpoint): number {
   const parameterInputTokenCost = parameterInputTokens * 0.0000005;
   const endpointOutputTokenCost = 23 * 0.00006;
   const parameterOutputTokenCost = (nReqPrompts + nResPrompts + nQueryPrompts) * 23 * 0.0000005; 
-  const totalTokenCost = Math.round((endpointInputTokenCost + parameterInputTokenCost + endpointOutputTokenCost + parameterOutputTokenCost) * 100) / 100;
+  const totalTokenCost = endpointInputTokenCost + parameterInputTokenCost + endpointOutputTokenCost + parameterOutputTokenCost;
 
   return totalTokenCost;
 }

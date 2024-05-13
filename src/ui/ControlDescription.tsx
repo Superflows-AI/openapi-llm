@@ -135,6 +135,7 @@ const ControlDescription = () => {
                           {endpoints.map((endpoint) => {
                             const endpointKey = `${endpoint.host}${endpoint.pathname}`;
                             const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
+                            const roundedTokenCount = Math.round(tokenCount * 100) / 100;
                             
                             return (
                               <Checkbox
@@ -143,7 +144,7 @@ const ControlDescription = () => {
                                 onChange={() => onCheckboxChange(`${endpoint.host}${endpoint.pathname}`)}
                               >
                                 
-                                <span className="token-cost">{endpoint.pathname} | Est token cost: ~${tokenCount.toFixed(2)}</span>
+                                <span className="token-cost">{endpoint.pathname} | Est token cost: ~${roundedTokenCount.toFixed(2)}</span>
                               </Checkbox>
                             );
                           })}
