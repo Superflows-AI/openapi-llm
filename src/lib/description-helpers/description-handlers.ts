@@ -5,20 +5,18 @@ export function getEndpointIdentifier(endpoint: Endpoint): string {
   return `${endpoint.host}${endpoint.pathname}`;
 }
 
-export function mergeDescriptions(endpoints: Array<Endpoint>, selectedEndpoints: Array<Endpoint>): Array<Endpoint> {
+export function mergeDescriptions(endpoints: Array<Endpoint>, selectedEndpoints: Array<string>): Array<Endpoint> {
     const descriptions = requestStore.getEndpointDescriptions();
     const requestBodySchemaParamDescriptions = requestStore.requestBodySchemaParamDescriptions;
     const responseBodySchemaParamDescriptions = requestStore.responseBodySchemaParamDescriptions;
     const queryParamDescriptions = requestStore.getQueryParamDescriptions();
-    
-    const selectedEndpointIds = selectedEndpoints.map(endpoint => getEndpointIdentifier(endpoint));
 
 
     // only address the selected endpoints here
 
     return endpoints.map(endpoint => {
         const id = getEndpointIdentifier(endpoint);
-        if (!selectedEndpointIds.includes(id)) {
+        if (!selectedEndpoints.includes(id)) {
             return endpoint;
         }
         const description = descriptions[id] || "";
