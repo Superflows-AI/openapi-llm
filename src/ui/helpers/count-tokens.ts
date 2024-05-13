@@ -1,6 +1,11 @@
-import { Endpoint } from "../../utils/types";
-import { getEndpointPrompt, getQueryParameterPrompts, getResponseBodyParameterPrompts, getRequestBodyParameterPrompts } from "../../lib/describe-endpoints";
+import {Endpoint} from "../../utils/types";
+import {
+  getQueryParameterPrompts,
+  getRequestBodyParameterPrompts,
+  getResponseBodyParameterPrompts
+} from "../../lib/describe-endpoints";
 import tokenizer from "gpt-tokenizer";
+import {getEndpointPrompt} from "../../lib/description-helpers/endpoint-prompt.ts";
 
 
 export interface ChatMessage {
@@ -20,28 +25,21 @@ export default function estimateEndpointTokens(endpoint: Endpoint): number {
   const nResPrompts = Object.keys(requestBodyParameterPrompts).length;
   const nQueryPrompts = Object.keys(queryParameterPrompts).length;
 
-  const avgParameterPromptTokens = 203;
-
   const endpointTokens = countTokens(endpointPrompt);
 
-  const parameterInputTokens = (nReqPrompts + nResPrompts + nQueryPrompts) * avgParameterPromptTokens;
-
+  // GPT4
   const endpointInputTokenCost = endpointTokens * 0.00003;
-  const parameterInputTokenCost = parameterInputTokens * 0.0000005;
   const endpointOutputTokenCost = 23 * 0.00006;
-  const parameterOutputTokenCost = (nReqPrompts + nResPrompts + nQueryPrompts) * 23 * 0.0000005; 
-  const totalTokenCost = endpointInputTokenCost + parameterInputTokenCost + endpointOutputTokenCost + parameterOutputTokenCost;
 
-  return totalTokenCost;
+  // GPT3.5-turbo
+  const parameterInputTokenCost = (nReqPrompts + nResPrompts + nQueryPrompts) * 0.0000005;
+  const parameterOutputTokenCost = (nReqPrompts + nResPrompts + nQueryPrompts) * 23 * 0.0000005;
+
+  return endpointInputTokenCost + parameterInputTokenCost + endpointOutputTokenCost + parameterOutputTokenCost;
 }
 
 function countTokens(message: string): number {
-  let gptMessage: ChatMessage[];
-  if (typeof message === "string") {
-    gptMessage = [{ role: "user", content: message }];
-  } else {
-    gptMessage = message as ChatMessage[];
-  }
+  const gptMessage: ChatMessage[] = [{role: "user", content: message}];
 
   // Per the docs, the tokenizer should be the same for 3.5-turbo and 4.
   const encoded = tokenizer.encodeChat(gptMessage, "gpt-4");

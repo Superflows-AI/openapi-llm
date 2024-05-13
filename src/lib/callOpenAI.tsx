@@ -26,17 +26,13 @@ export async function exponentialRetryWrapper<Args extends Array<unknown>, Outpu
   }
 }
 
-export async function callOpenAI(userPrompt: string, systemPrompt: string, model: string) {
-
+export async function callOpenAI(systemPrompt: string, model: string) {
   const apiKey: string | null = localStorage.getItem('OPENAI_API_KEY');
 
   if (apiKey !== null) {
     const openai = new OpenAI({ apiKey: apiKey, dangerouslyAllowBrowser: true });
-
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
-      messages: [
-        { role: 'system', content: systemPrompt},
-        { role: 'user', content: userPrompt }],
+      messages: [{ role: 'system', content: systemPrompt }],
       model: model,
       temperature: 0.0
     };

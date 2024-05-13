@@ -1,17 +1,20 @@
-import { Endpoint } from "../utils/types";
-import type { Schema } from "genson-js";
-import { methodDetailsToString, schemaToString, truncateExample, capitalizeFirstLetter, getExample, getParameterPaths } from "./description-helpers/endpoint-parsers" //getQueryParameterExample 
-import { endpointSystemPrompt, parameterSystemPrompt, endpointDescriptionPrompt, queryParameterDescriptionPrompt, requestParameterDescriptionPrompt, responseParameterDescriptionPrompt } from "./description-helpers/prompts";
-import { callOpenAI, exponentialRetryWrapper} from "./callOpenAI";
+import {Endpoint} from "../utils/types";
+import type {Schema} from "genson-js";
+import {
+  capitalizeFirstLetter,
+  getExample,
+  getParameterPaths,
+  schemaToString,
+  truncateExample
+} from "./description-helpers/endpoint-parsers" //getQueryParameterExample
+import {callOpenAI, exponentialRetryWrapper} from "./callOpenAI";
+import {getEndpointPrompt} from "./description-helpers/endpoint-prompt.ts";
+import {
+  queryParameterDescriptionPrompt,
+  requestParameterDescriptionPrompt,
+  responseParameterDescriptionPrompt
+} from "./description-helpers/description-prompts.ts";
 
-
-export function getEndpointPrompt (endpoint: Endpoint): string {
-  const methodsString = Object.entries(endpoint.data.methods)
-  .map(([method, details]) => `${method.toUpperCase()}: ` + methodDetailsToString(details))
-  .join('\n');
-
-  return endpointDescriptionPrompt(methodsString);
-}
 
 export async function describeApiEndpoint(endpoint: Endpoint, model: string): Promise<string | null> {
 
@@ -20,15 +23,10 @@ export async function describeApiEndpoint(endpoint: Endpoint, model: string): Pr
   console.log(endpointPrompt);
 
   try {
-
-    const endpointDescription = await exponentialRetryWrapper(callOpenAI, [endpointPrompt, endpointSystemPrompt, model], 5)
-
+    const endpointDescription = await exponentialRetryWrapper(callOpenAI, [endpointPrompt, model], 5)
     if (endpointDescription.choices && endpointDescription.choices.length > 0 && endpointDescription.choices[0].message) {
-      
       const content = endpointDescription.choices[0].message.content;
-      const capContent = capitalizeFirstLetter(content);
-      
-      return capContent;
+      return capitalizeFirstLetter(content);
     } else {
       console.warn('Unexpected OpenAI response format:', endpointDescription);
       return null;
@@ -55,8 +53,7 @@ export function getRequestBodyParameterPrompts(endpoint: Endpoint, endpointDescr
       const exampleType = typeof example;
 
       const paramExample = JSON.stringify(example);
-      const paramPrompt = requestParameterDescriptionPrompt(endpointId, endpointDescription, paramPath, exampleType, paramExample);
-      parameterPrompts[paramPath] = paramPrompt;   
+      parameterPrompts[paramPath] = requestParameterDescriptionPrompt(endpointId, endpointDescription, paramPath, exampleType, paramExample);
     }
   });
   return parameterPrompts;
@@ -70,12 +67,11 @@ export async function describeRequestBodyParameters(endpoint: Endpoint, endpoint
   for (const parentPath in paramPrompts) {
     try {
 
-      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], parameterSystemPrompt, model], 5)
+      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5)
 
       if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
         const content = paramDescription.choices[0].message.content;
-        const capContent = capitalizeFirstLetter(content);
-        parameterDescriptions[parentPath] = capContent;
+        parameterDescriptions[parentPath] = capitalizeFirstLetter(content);
         } else {
           console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
           parameterDescriptions[parentPath] = null;
@@ -105,8 +101,7 @@ export function getResponseBodyParameterPrompts(endpoint: Endpoint, endpointDesc
       const exampleType = typeof example;
 
       const paramExample = JSON.stringify(example);
-      const paramPrompt = responseParameterDescriptionPrompt(endpointId, endpointDescription, paramPath, exampleType, paramExample);
-      parameterPrompts[paramPath] = paramPrompt;   
+      parameterPrompts[paramPath] = responseParameterDescriptionPrompt(endpointId, endpointDescription, paramPath, exampleType, paramExample);
     }
   });
   return parameterPrompts;
@@ -121,12 +116,11 @@ export async function describeResponseBodyParameters(endpoint: Endpoint, endpoin
 
     try {
       const paramPrompt = paramPrompts[parentPath];
-      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, parameterSystemPrompt, model], 5);
+      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5);
 
       if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
         const content = paramDescription.choices[0].message.content;
-        const capContent = capitalizeFirstLetter(content);
-        parameterDescriptions[parentPath] = capContent;
+        parameterDescriptions[parentPath] = capitalizeFirstLetter(content);
       } else {
         console.warn(`Unexpected OpenAI response format for parameter '${parentPath}':`, paramDescription);
         parameterDescriptions[parentPath] = null;
@@ -168,9 +162,8 @@ export function getQueryParameterPrompts(endpoint: Endpoint, endpointDescription
           });
 
           const promptExample = JSON.stringify(truncateExample(example, paramPath));
-            
-          const paramPrompt = queryParameterDescriptionPrompt(endpointId, endpointDescription, paramPath, schemaToString(param), promptExample);
-          parameterPrompts[paramPath] = paramPrompt;
+
+          parameterPrompts[paramPath] = queryParameterDescriptionPrompt(endpointId, endpointDescription, paramPath, schemaToString(param), promptExample);
         }
       }
     }
@@ -188,11 +181,10 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
     const paramPrompt = paramPrompts[paramPath];
 
     try {
-      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, parameterSystemPrompt, model], 5);
+      const paramDescription = await exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5);
       if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
         const content = paramDescription.choices[0].message.content;
-        const capContent = capitalizeFirstLetter(content);
-        parameterDescriptions[paramPath] = capContent;
+        parameterDescriptions[paramPath] = capitalizeFirstLetter(content);
       } else {
         console.warn(`Unexpected OpenAI response format for parameter '${paramPath}':`, paramDescription);
         parameterDescriptions[paramPath] = null;
