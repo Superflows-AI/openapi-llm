@@ -1,1 +1,0 @@
-{"version":3,"file":"index.html-717e719a.js","sources":["../../src/loadPanel.js"],"sourcesContent":["chrome.devtools.panels.create(\n    \"OpenAPI\",\n    \"icon16.png\",\n    \"/src/panel.html\",\n);\n\n"],"names":[],"mappings":";;AAAA,MAAM,CAAC,QAAQ,CAAC,MAAM,CAAC,MAAM;AAC7B,IAAI,SAAS;AACb,IAAI,YAAY;AAChB,IAAI,iBAAiB;AACrB,CAAC"}
