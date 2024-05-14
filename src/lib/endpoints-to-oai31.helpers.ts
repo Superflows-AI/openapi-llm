@@ -143,23 +143,28 @@ export const createPathParameterTypes = (
 };
 
 export const createQueryParameterTypes = (
-  queryParameters: Schema | undefined,
+  queryParameters: Leaf["methods"]["get"]["queryParameters"],
   options: Options,
-  mostRecent?: any,
 ): Array<ParameterObject> => {
-  if (!queryParameters?.properties) return [];
-  const namesAndSchemas = Object.entries(queryParameters.properties);
+  if (!queryParameters || !queryParameters.parameters || !queryParameters.parameters.properties) {
+    return [];
+  }
+
+  const namesAndSchemas = Object.entries(queryParameters.parameters.properties);
+  const mostRecent = queryParameters.mostRecent as Record<string, Schema> | undefined; // Ensure mostRecent is an object
+
   return namesAndSchemas.map(([name, schema]) => {
     const parameterObject: ParameterObject = {
       name,
       in: "query",
       required: false,
       schema,
-      ...(options.enableMoreInfo && mostRecent && { example: mostRecent[name] })
+      ...(options.enableMoreInfo && mostRecent && mostRecent[name] && { example: mostRecent[name] })
     };
     return parameterObject;
   });
 };
+
 
 
 export const formatAuthType = (str: string) => {

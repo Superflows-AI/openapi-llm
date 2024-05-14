@@ -11,7 +11,7 @@ import Start from "./Start";
 import classes from "./main.module.css";
 import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
-import { isEmpty } from "lodash"; //get,
+import { isEmpty } from "lodash"; 
 import estimateEndpointTokens from "./helpers/count-tokens";
 import { getEndpointIdentifier, getEndpointMethodIdentifier, getAllEndpointMethodIdentifiers, mergeDescriptions } from "../lib/description-helpers/description-handlers";
 import { describeApiEndpoint, describeRequestBodyParameters, describeResponseBodyParameters, describeQueryParameters } from "../lib/describe-endpoints"; // describeRequestHeaders,
@@ -214,7 +214,7 @@ function Main() {
         responseBodySchemaParams[id] = responseBodySchemaDescription;
         queryParams[id] = queryParamDescription;
         }
-      };
+      }
 
     requestStore.setEndpointDescriptions(descriptions);
     requestStore.setRequestBodySchemaParamDescriptions(requestBodySchemaParams);

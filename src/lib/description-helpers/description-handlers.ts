@@ -90,8 +90,8 @@ function mergeParamDescriptions (
                         ...currentLevel[paramName],
                         description: paramDescriptions[endpointId][paramPath]
                     };
-                };
-            };
+                }
+            }
         });
     });
     return mergedParams as Method;

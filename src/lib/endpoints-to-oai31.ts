@@ -50,9 +50,8 @@ const endpointsToOAI31 = (
       const endpointMethod = endpoint.data.methods[method]!;
 
       const queryParameterObjects = createQueryParameterTypes(
-        endpointMethod.queryParameters?.parameters,
+        endpointMethod.queryParameters,
         options, 
-        endpointMethod.queryParameters?.mostRecent,
       );
 
       const requestBody = createRequestTypes(
