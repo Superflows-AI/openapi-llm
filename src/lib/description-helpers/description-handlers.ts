@@ -14,52 +14,51 @@ const endpointMethodIdentifiers = Object.keys(endpoint.data.methods);
 return endpointMethodIdentifiers.map(method => getEndpointMethodIdentifier(endpoint, method));
 }
 
+export function mergeDescriptions(endpoints: Array<Endpoint>, selectedEndpoints: Set<string>): Array<Endpoint> {
+const descriptions = requestStore.getEndpointDescriptions();
+const requestBodySchemaParamDescriptions = requestStore.requestBodySchemaParamDescriptions;
+const responseBodySchemaParamDescriptions = requestStore.responseBodySchemaParamDescriptions;
+const queryParamDescriptions = requestStore.getQueryParamDescriptions();
 
-  export function mergeDescriptions(endpoints: Array<Endpoint>, selectedEndpoints: Set<string>): Array<Endpoint> {
-    const descriptions = requestStore.getEndpointDescriptions();
-    const requestBodySchemaParamDescriptions = requestStore.requestBodySchemaParamDescriptions;
-    const responseBodySchemaParamDescriptions = requestStore.responseBodySchemaParamDescriptions;
-    const queryParamDescriptions = requestStore.getQueryParamDescriptions();
+return endpoints.map(endpoint => {
+    const ids = getAllEndpointMethodIdentifiers(endpoint);
+    let shouldReturnOriginal = true;
 
-    return endpoints.map(endpoint => {
-        const ids = getAllEndpointMethodIdentifiers(endpoint);
-        let shouldReturnOriginal = true;
-
-        for (const id of ids) {
-            if (selectedEndpoints.has(id)) {
-                shouldReturnOriginal = false;
-                const description = descriptions[id] || "";
-                if (description) {
-                    const mergedMethodsWithRequestBody = mergeParamDescriptions(
-                        endpoint.data.methods,
-                        requestBodySchemaParamDescriptions,
-                    );
-          
-                    const mergedMethodsWithResponseBody = mergeParamDescriptions(
-                        mergedMethodsWithRequestBody,
-                        responseBodySchemaParamDescriptions,
-                    );
-          
-                    const mergedMethodsWithQueryParams = mergeParamDescriptions(
-                        mergedMethodsWithResponseBody,
-                        queryParamDescriptions,
-                    );
-          
-                    return {
-                        ...endpoint,
-                        description,
-                        data: {
-                            ...endpoint.data,
-                            methods: mergedMethodsWithQueryParams
-                        }
-                    };
-                }
+    for (const id of ids) {
+        if (selectedEndpoints.has(id)) {
+            shouldReturnOriginal = false;
+            const description = descriptions[id] || "";
+            if (description) {
+                const mergedMethodsWithRequestBody = mergeParamDescriptions(
+                    endpoint.data.methods,
+                    requestBodySchemaParamDescriptions,
+                );
+        
+                const mergedMethodsWithResponseBody = mergeParamDescriptions(
+                    mergedMethodsWithRequestBody,
+                    responseBodySchemaParamDescriptions,
+                );
+        
+                const mergedMethodsWithQueryParams = mergeParamDescriptions(
+                    mergedMethodsWithResponseBody,
+                    queryParamDescriptions,
+                );
+        
+                return {
+                    ...endpoint,
+                    description,
+                    data: {
+                        ...endpoint.data,
+                        methods: mergedMethodsWithQueryParams
+                    }
+                };
             }
         }
+    }
 
-        // If no selected endpoint modifies this endpoint, return it unchanged
-        return shouldReturnOriginal ? endpoint : undefined;
-    }).filter(endpoint => endpoint !== undefined) as Endpoint[]; // Filter out any undefined elements to satisfy TypeScript's type checking
+    // If no selected endpoint modifies this endpoint, return it unchanged
+    return shouldReturnOriginal ? endpoint : undefined;
+}).filter(endpoint => endpoint !== undefined) as Endpoint[]; // Filter out any undefined elements to satisfy TypeScript's type checking
 }
 
   

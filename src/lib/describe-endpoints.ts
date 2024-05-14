@@ -6,6 +6,11 @@ import { getEndpointPrompt } from "./description-helpers/endpoint-prompt";
 import { callOpenAI, exponentialRetryWrapper} from "./callOpenAI";
 
 
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 export function getEndpointMethodPrompt (endpointMethod: MethodInstance, method: string, endpointId: string): string {
 
   console
@@ -40,6 +45,7 @@ export async function describeApiEndpoint(endpoint: Endpoint, method: string, mo
 export function getRequestBodyParameterPrompts(endpoint: Endpoint, method: string, endpointDescription: string): Record<string, string> {
   
   const endpointId = `${endpoint.host}${endpoint.pathname}/${method}`;
+  
   const parameterPrompts: Record<string, string> = {};
 
   const paramPaths = getParameterPaths(endpoint.data.methods[method], method);
@@ -62,13 +68,15 @@ export function getRequestBodyParameterPrompts(endpoint: Endpoint, method: strin
 export async function describeRequestBodyParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {}; 
   const descriptionPromises = [];
+  const baseDelay = 50; // base delay in milliseconds
 
   for (const method in endpoint.data.methods) {
     const paramPrompts = getRequestBodyParameterPrompts(endpoint, method, endpointDescription);
 
     for (const parentPath in paramPrompts) {
-      // Generate promises and store them in an array for parallel processing
-      const descriptionPromise = exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5)
+      // Add a delay for each API call, incrementing the delay for each new request
+      const descriptionPromise = delay(baseDelay)
+        .then(() => exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5))
         .then(paramDescription => {
           if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
             const content = paramDescription.choices[0].message.content;
@@ -116,16 +124,19 @@ export function getResponseBodyParameterPrompts(endpoint: Endpoint, method: stri
   return parameterPrompts;
 }
 
+
 export async function describeResponseBodyParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
-  const descriptionPromises = [];
+  const descriptionPromises = []; // Starting with no delay for the first request
+  const baseDelay = 50;   // Delay increment for each subsequent request
 
   for (const method in endpoint.data.methods) {
     const paramPrompts = getResponseBodyParameterPrompts(endpoint, method, endpointDescription);
 
     for (const parentPath in paramPrompts) {
-      // Create a promise for each API call and add it to the array
-      const descriptionPromise = exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5)
+      // Add a delay for each API call, incrementing the delay for each new request
+      const descriptionPromise = delay(baseDelay)
+        .then(() => exponentialRetryWrapper(callOpenAI, [paramPrompts[parentPath], model], 5))
         .then(paramDescription => {
           if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
             const content = paramDescription.choices[0].message.content;
@@ -144,7 +155,7 @@ export async function describeResponseBodyParameters(endpoint: Endpoint, endpoin
     }
   }
 
-  // Wait for all promises to resolve
+  // Wait for all the promises to resolve
   await Promise.all(descriptionPromises);
 
   return parameterDescriptions;
@@ -189,6 +200,7 @@ export function getQueryParameterPrompts(endpoint: Endpoint, method: string, end
 export async function describeQueryParameters(endpoint: Endpoint, endpointDescription: string, model: string): Promise<Record<string, string | null>> {
   const parameterDescriptions: Record<string, string | null> = {};
   const descriptionPromises = [];
+  const baseDelay = 50; // base delay in milliseconds
 
   for (const method in endpoint.data.methods) {
     const paramPrompts = getQueryParameterPrompts(endpoint, method, endpointDescription);
@@ -196,8 +208,9 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
     for (const paramPath in paramPrompts) {
       const paramPrompt = paramPrompts[paramPath];
 
-      // Collect each API call as a promise in an array
-      const descriptionPromise = exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5)
+      // Prepare a promise with a delay
+      const descriptionPromise = delay(baseDelay)
+        .then(() => exponentialRetryWrapper(callOpenAI, [paramPrompt, model], 5))
         .then(paramDescription => {
           if (paramDescription.choices && paramDescription.choices.length > 0 && paramDescription.choices[0].message) {
             const content = paramDescription.choices[0].message.content;
@@ -212,7 +225,7 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
           parameterDescriptions[paramPath] = null;
         });
 
-      descriptionPromises.push(descriptionPromise);
+      descriptionPromises.push(descriptionPromise); // Increment delay for the next promise
     }
   }
 
@@ -221,4 +234,5 @@ export async function describeQueryParameters(endpoint: Endpoint, endpointDescri
 
   return parameterDescriptions;
 }
+
 
