@@ -14,7 +14,7 @@ function delay(ms: number) {
 export function getEndpointMethodPrompt (endpointMethod: MethodInstance, method: string, endpointId: string): string {
 
   const methodsString = `${method.toUpperCase()}: ${endpointId}\n${methodDetailsToString(endpointMethod, method, endpointId)}`
-  
+
   const prompt = getEndpointPrompt(methodsString);
   return prompt;
 }
@@ -109,6 +109,7 @@ export function getResponseBodyParameterPrompts(endpoint: Endpoint, method: stri
 
   paramPaths.forEach((paramPath) => {
     const splitPath = paramPath.split('|');
+
     const reqres = splitPath[1];
 
     if (reqres === 'response') {
@@ -130,7 +131,6 @@ export async function describeResponseBodyParameters(endpoint: Endpoint, endpoin
 
   for (const method in endpoint.data.methods) {
     const paramPrompts = getResponseBodyParameterPrompts(endpoint, method, endpointDescription);
-
     for (const parentPath in paramPrompts) {
       // Add a delay for each API call, incrementing the delay for each new request
       const descriptionPromise = delay(baseDelay)
@@ -155,7 +155,6 @@ export async function describeResponseBodyParameters(endpoint: Endpoint, endpoin
 
   // Wait for all the promises to resolve
   await Promise.all(descriptionPromises);
-
   return parameterDescriptions;
 }
 

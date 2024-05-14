@@ -32,16 +32,19 @@ export function mergeDescriptions(endpoints: Array<Endpoint>, selectedEndpoints:
                     const mergedMethodsWithRequestBody = mergeParamDescriptions(
                         endpoint.data.methods,
                         requestBodySchemaParamDescriptions,
+                        id
                     );
             
                     const mergedMethodsWithResponseBody = mergeParamDescriptions(
                         mergedMethodsWithRequestBody,
                         responseBodySchemaParamDescriptions,
+                        id
                     );
             
                     const mergedMethodsWithQueryParams = mergeParamDescriptions(
                         mergedMethodsWithResponseBody,
                         queryParamDescriptions,
+                        id
                     );
             
                     return {
@@ -62,37 +65,45 @@ export function mergeDescriptions(endpoints: Array<Endpoint>, selectedEndpoints:
 }
 
   
-function mergeParamDescriptions (
+function mergeParamDescriptions(
     obj: Method,
     paramDescriptions: Record<string, Record<string, string | null>>,
+    endpointId: string
 ): Method {
 
     const mergedParams = JSON.parse(JSON.stringify(obj));
 
-    Object.keys(paramDescriptions).forEach(endpointId => {
-        Object.keys(paramDescriptions[endpointId]).forEach(paramPath => {
-            const pathParts = paramPath.split('|');
-            const methodType = pathParts[0].toUpperCase();
-            if (mergedParams[methodType]) {
-                let currentLevel = mergedParams[methodType];
-                
-                for (let i = 1; i < pathParts.length - 1; i++) {
-                    const part = pathParts[i];
-                    if (!currentLevel[part]) {
-                        currentLevel[part] = {};
-                    }
-                    currentLevel = currentLevel[part];
-                }
-                const paramName = pathParts[pathParts.length - 1];
+    // Extract the endpoint ID from the obj parameter
 
-                if (currentLevel[paramName]) {
-                    currentLevel[paramName] = {
-                        ...currentLevel[paramName],
-                        description: paramDescriptions[endpointId][paramPath]
-                    };
+    // Check if paramDescriptions contains the extracted endpointId
+    if (!paramDescriptions[endpointId]) {
+        return mergedParams; // Return the original method object if no descriptions for this endpoint
+    }
+
+    // Iterate through the parameter descriptions for the specific endpoint
+    Object.keys(paramDescriptions[endpointId]).forEach(paramPath => {
+        const pathParts = paramPath.split('|');
+        const methodType = pathParts[0].toUpperCase();
+        if (mergedParams[methodType]) {
+            let currentLevel = mergedParams[methodType];
+
+            for (let i = 1; i < pathParts.length - 1; i++) {
+                const part = pathParts[i];
+                if (!currentLevel[part]) {
+                    currentLevel[part] = {};
                 }
+                currentLevel = currentLevel[part];
             }
-        });
+            const paramName = pathParts[pathParts.length - 1];
+
+            if (currentLevel[paramName]) {
+                currentLevel[paramName] = {
+                    ...currentLevel[paramName],
+                    description: paramDescriptions[endpointId][paramPath]
+                };
+            }
+        }
     });
+
     return mergedParams as Method;
 }
