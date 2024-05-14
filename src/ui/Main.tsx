@@ -87,13 +87,10 @@ function Main() {
 
       const identifiers = getAllEndpointMethodIdentifiers(endpoint);
       for (const identifier of identifiers) {
-        console.log('In fetchTokenCounts identifier:',identifier);
         if (!newTokenCounts[identifier]) {
-          console.log('Collecting tokens for:',identifier);
           const tokenCost = estimateEndpointTokens(endpoint, method, identifier);
           newTokenCounts[identifier] = tokenCost;
-          console.log('Token cost:',tokenCost);
-          console.log('New token counts:',newTokenCounts);
+
         }
       };
     setEndpointTokenCounts(newTokenCounts);
@@ -108,7 +105,7 @@ function Main() {
     for (const endpoint of nextEndpoints) {
       for (const method in endpoint.data.methods) {
         const identifier = getEndpointMethodIdentifier(endpoint, method);
-        console.log('In setSpecEndpoints identifier:',identifier);
+
         if (!currentTokenCounts[identifier]) {
           fetchTokenCounts(endpoint, method);
         }
