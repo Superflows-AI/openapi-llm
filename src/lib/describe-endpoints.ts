@@ -13,8 +13,6 @@ function delay(ms: number) {
 
 export function getEndpointMethodPrompt (endpointMethod: MethodInstance, method: string, endpointId: string): string {
 
-  console
-
   const methodsString = `${method.toUpperCase()}: ${endpointId}\n${methodDetailsToString(endpointMethod, method, endpointId)}`
 
   const prompt = getEndpointPrompt(methodsString);
