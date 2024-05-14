@@ -10,6 +10,7 @@ import {
   ResponseObject,
   ResponsesObject,
   SecuritySchemeObject,
+  LinksObject
 } from "openapi3-ts/oas31";
 
 import { Options } from "./RequestStore.js";
@@ -68,6 +69,12 @@ export const createRequestTypes = (
 };
 
 type ResponseType = Leaf["methods"]["get"]["response"];
+interface ResponseObjectExtended extends ResponseObject {
+  description: string;
+  headers?: HeadersObject;
+  content?: ContentObject;
+  links?: LinksObject;
+}
 
 export const createResponseTypes = (
   responseType: ResponseType,
@@ -98,8 +105,9 @@ export const createResponseTypes = (
         ...(!!options.enableMoreInfo && { example: data.mostRecent }),
       };
       contentObject[mediaType] = mediaTypeObject;
-      const responseObject: ResponseObject = {
+      const responseObject: ResponseObjectExtended = {
         content: contentObject,
+        description: "",
         headers: headersObject,
       };
       responsesObject[statusCode] = responseObject;
