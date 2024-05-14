@@ -11,8 +11,9 @@ export interface ChatMessage {
 // endpoint: Endpoint, method: string, endpointDescription: string
 
 export default function estimateEndpointMethodTokens(endpoint: Endpoint, method: string, endpointId: string): number {
-  // NEED TO UPDATE THIS TO THE ENDPOINT METHOD 
+  
   const mockEndpointMethodDescription = 'An example endpoint description of approximately the correct length'
+  
   const endpointMethodPrompt = getEndpointMethodPrompt(endpoint.data.methods[method], method, endpointId);
   const queryParameterPrompts = getQueryParameterPrompts(endpoint, method, mockEndpointMethodDescription)
   const responseBodyPrompts = getResponseBodyParameterPrompts(endpoint, method, mockEndpointMethodDescription)

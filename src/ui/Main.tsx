@@ -13,7 +13,7 @@ import endpointsToOAI31 from "../lib/endpoints-to-oai31";
 import { sortEndpoints } from './helpers/endpoints-by-host';
 import { isEmpty } from "lodash"; 
 import estimateEndpointTokens from "./helpers/count-tokens";
-import { getEndpointIdentifier, getEndpointMethodIdentifier, getAllEndpointMethodIdentifiers, mergeDescriptions } from "../lib/description-helpers/description-handlers";
+import {  getEndpointMethodIdentifier, getAllEndpointMethodIdentifiers, mergeDescriptions } from "../lib/description-helpers/description-handlers";
 import { describeApiEndpoint, describeRequestBodyParameters, describeResponseBodyParameters, describeQueryParameters } from "../lib/describe-endpoints"; // describeRequestHeaders,
 
 
@@ -83,13 +83,19 @@ function Main() {
 
   const fetchTokenCounts = async (endpoint: Endpoint, method: string) => {
       
-      const newTokenCounts = requestStore.getEndpointTokenCounts();
-      const identifier = getEndpointIdentifier(endpoint);
-      const tokenCost = await estimateEndpointTokens(endpoint, method, identifier);
-      // const tokenCount = 1000;
+      const newTokenCounts = requestStore.getEndpointTokenCounts()
 
-      newTokenCounts[identifier] = tokenCost;
-    
+      const identifiers = getAllEndpointMethodIdentifiers(endpoint);
+      for (const identifier of identifiers) {
+        console.log('In fetchTokenCounts identifier:',identifier);
+        if (!newTokenCounts[identifier]) {
+          console.log('Collecting tokens for:',identifier);
+          const tokenCost = estimateEndpointTokens(endpoint, method, identifier);
+          newTokenCounts[identifier] = tokenCost;
+          console.log('Token cost:',tokenCost);
+          console.log('New token counts:',newTokenCounts);
+        }
+      };
     setEndpointTokenCounts(newTokenCounts);
     requestStore.setEndpointTokenCounts(newTokenCounts);
   };
@@ -102,7 +108,7 @@ function Main() {
     for (const endpoint of nextEndpoints) {
       for (const method in endpoint.data.methods) {
         const identifier = getEndpointMethodIdentifier(endpoint, method);
-
+        console.log('In setSpecEndpoints identifier:',identifier);
         if (!currentTokenCounts[identifier]) {
           fetchTokenCounts(endpoint, method);
         }

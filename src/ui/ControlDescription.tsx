@@ -135,7 +135,7 @@ const ControlDescription = () => {
                         <VStack align="stretch" spacing={4}>
                           {endpoints.map((endpoint) => {
                             return Object.keys(endpoint.data.methods).map((method) => {
-                              const endpointKey = `${endpoint.host}${endpoint.pathname}`;
+                              const endpointKey = `${endpoint.host}${endpoint.pathname}/${method}`;
                               const tokenCount = context.endpointTokenCounts[endpointKey] || 0;
                               const roundedTokenCount = Math.round(tokenCount * 100) / 100;
                               return ( 
