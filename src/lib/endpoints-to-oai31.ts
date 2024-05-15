@@ -17,9 +17,11 @@ import {
   formatAuthType,
   shouldIncludeRequestBody,
 } from "./endpoints-to-oai31.helpers.js";
+
 import { Options } from "./RequestStore.js";
 import { defaultOptions } from "./store-helpers/persist-options.js";
 import { AuthTypeString, Endpoint } from "../utils/types.js";
+
 
 const endpointsToOAI31 = (
   endpoints: Array<Endpoint>,
@@ -33,7 +35,6 @@ const endpointsToOAI31 = (
     const fullPath = `/${endpoint.parts.map((p) => p.part).join("/")}`;
     const pathParameterObjects = createPathParameterTypes(endpoint);
     uniqueHosts.add(endpoint.host);
-
     const auth = endpoint.data.authentication;
     if (auth) {
       Object.values(auth).forEach((value) => {
@@ -47,14 +48,21 @@ const endpointsToOAI31 = (
     for (const method of Object.keys(endpoint.data.methods)) {
       const methodLower = method.toLowerCase();
       const endpointMethod = endpoint.data.methods[method]!;
+
       const queryParameterObjects = createQueryParameterTypes(
         endpointMethod.queryParameters,
+        options, 
       );
-      const requestBody = createRequestTypes(endpointMethod.request, options);
+
+      const requestBody = createRequestTypes(
+        endpointMethod.request,
+        options
+      );
+      
       const responses = createResponseTypes(
         endpointMethod.response,
         endpointMethod.responseHeaders,
-        options,
+        options
       );
       const security: SecurityRequirementObject[] = [];
       if (!isEmpty(endpoint.data.authentication)) {
@@ -62,26 +70,35 @@ const endpointsToOAI31 = (
           security.push({ [formatAuthType(value.authType)]: [] });
         });
       }
+
       const operation: OperationObject = {
         summary: fullPath,
-        description: `**Host**: http://${endpoint.host}`,
+        description: endpoint.description || `**Host**: http://${endpoint.host}`,
         responses,
         ...(security && { security }),
       };
+
       const allParameterObjects = [
         ...pathParameterObjects,
         ...queryParameterObjects,
       ];
+
       if (allParameterObjects.length) {
         operation.parameters = allParameterObjects;
       }
+
       if (requestBody && shouldIncludeRequestBody(method)) {
         operation.requestBody = requestBody;
       }
-      // The method (e.g. get) and the operation on it
+
+      if (requestBody && shouldIncludeRequestBody(method)) {
+        operation.requestBody = requestBody;
+      }
+
       const pathItemObject: PathItemObject = {
         [methodLower]: operation,
       };
+
       const path = endpoint.pathname;
       const { rootDoc } = builder;
       rootDoc.paths = rootDoc.paths || {};

@@ -6,7 +6,7 @@ const key = "options";
 const store = store2.namespace(namespace);
 
 export const defaultOptions: Readonly<Options> = {
-  enableMoreInfo: false,
+  enableMoreInfo: true,
 };
 
 const get = (): Options => {

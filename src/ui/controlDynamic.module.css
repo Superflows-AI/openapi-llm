@@ -32,3 +32,8 @@
 .search {
   margin-bottom: 1em;
 }
+
+.token-cost {
+  color: lightgrey;
+  display: inline-block;
+}

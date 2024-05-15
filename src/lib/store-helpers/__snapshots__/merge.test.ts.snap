@@ -5,19 +5,25 @@ exports[`merges leaves 1`] = `
   "methods": {
     "POST": {
       "queryParameters": {
-        "properties": {
-          "alt": {
-            "type": "string",
-          },
-          "key": {
-            "type": "string",
-          },
+        "mostRecent": {
+          "alt": "json",
+          "key": "abc",
         },
-        "required": [
-          "alt",
-          "key",
-        ],
-        "type": "object",
+        "parameters": {
+          "properties": {
+            "alt": {
+              "type": "string",
+            },
+            "key": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "alt",
+            "key",
+          ],
+          "type": "object",
+        },
       },
       "request": {
         "application/json": {
@@ -31,6 +37,9 @@ exports[`merges leaves 1`] = `
               "test",
             ],
             "type": "object",
+          },
+          "mostRecent": {
+            "test": true,
           },
         },
       },
@@ -59,7 +68,9 @@ exports[`merges leaves 1`] = `
               ],
               "type": "object",
             },
-            "mostRecent": undefined,
+            "mostRecent": {
+              "test": 1,
+            },
           },
         },
       },

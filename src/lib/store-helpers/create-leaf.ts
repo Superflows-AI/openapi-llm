@@ -21,6 +21,8 @@ export type Params = {
   options: Options;
 };
 
+
+
 const parseRequestBody = (harRequest: Entry): JSONType => {
   const { mimeType, text } = harRequest.request.postData || {};
   if (mimeType?.startsWith(APPLICATION_JSON)) return parseJSON(text);
@@ -68,10 +70,12 @@ function createLeaf({ harRequest, responseBody, options }: Params): Leaf {
           },
         },
         responseHeaders: createSchemaElseUndefined(responseHeaders),
-        queryParameters: createSchemaElseUndefined(queryParameters),
+        queryParameters: {
+          parameters: createSchemaElseUndefined(queryParameters),
+          ...(enableMoreInfo && { mostRecent: queryParameters})
       },
     },
-  };
+  }};
   return leafPart;
 }
 

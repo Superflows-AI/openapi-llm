@@ -44,6 +44,7 @@ export type Leaf = {
   authentication?: {
     [name: AuthTypeString]: Authentication;
   };
+  description?: string;
   // The current pathname of this endpoint, which may be static or parameterised
   pathname: string;
   // Methods such as GET, POST and schema values for requests
@@ -51,7 +52,7 @@ export type Leaf = {
     [method: string]: {
       // Requests may not contain a body
       request?: {
-        // mediaType is a a mime type such as application/json
+        // mediaType is a mime type such as application/json
         [mediaType: string]: {
           body?: Schema;
           // Sample of the most recent request
@@ -69,7 +70,11 @@ export type Leaf = {
         };
       };
       responseHeaders?: Schema;
-      queryParameters?: Schema;
+      queryParameters?: {
+        parameters?: Schema;
+        mostRecent?: unknown;
+      }
+      
     };
   };
 };
@@ -80,6 +85,8 @@ export enum PartType {
 }
 export type Parts = Array<{ part: string; type: PartType }>;
 // An Endpoint wraps a Leaf with additional data. Used as an intermediary step to simplify conversion into OAI.
+
+
 export type Endpoint = {
   // A host e.g. example.com
   host: string;
@@ -89,7 +96,19 @@ export type Endpoint = {
   parts: Parts;
   // Data for this endpoint
   data: Leaf;
+  // Natural language description of the endpoint
+  description?: string;
 };
+
+export type TokenCounts = {
+  [key: string]: number;
+};
+
+export enum DescriptionStatus {
+  INACTIVE,
+  ACTIVE,
+  COMPLETED
+}
 
 export enum Status {
   INIT,
@@ -103,3 +122,9 @@ export type RouterMap = { [host: string]: Router };
 export type LeafMap = { [host: string]: Record<string, RouteData> };
 
 export type EndpointsByHost = Array<{ endpoints: Endpoint[]; host: string }>;
+export type Method = Leaf["methods"];
+export type MethodInstance = Leaf["methods"][string];
+export type Data = Leaf["methods"]["get"];
+export type Req = NonNullable<Leaf["methods"]["get"]["request"]>;
+export type Res = Leaf["methods"]["get"]["response"];
+export type Query = Leaf["methods"]["get"]["queryParameters"]; 

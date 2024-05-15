@@ -7,19 +7,25 @@ exports[`flattens data into endpoints 1`] = `
       "methods": {
         "POST": {
           "queryParameters": {
-            "properties": {
-              "alt": {
-                "type": "string",
-              },
-              "key": {
-                "type": "string",
-              },
+            "mostRecent": {
+              "alt": "json",
+              "key": "abc",
             },
-            "required": [
-              "alt",
-              "key",
-            ],
-            "type": "object",
+            "parameters": {
+              "properties": {
+                "alt": {
+                  "type": "string",
+                },
+                "key": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "alt",
+                "key",
+              ],
+              "type": "object",
+            },
           },
           "request": {
             "application/json": {
@@ -33,6 +39,9 @@ exports[`flattens data into endpoints 1`] = `
                   "test",
                 ],
                 "type": "object",
+              },
+              "mostRecent": {
+                "test": "integer",
               },
             },
           },
@@ -60,6 +69,9 @@ exports[`flattens data into endpoints 1`] = `
                     "foo",
                   ],
                   "type": "object",
+                },
+                "mostRecent": {
+                  "foo": "bar",
                 },
               },
             },
@@ -91,19 +103,25 @@ exports[`flattens data into endpoints 1`] = `
       "methods": {
         "POST": {
           "queryParameters": {
-            "properties": {
-              "alt": {
-                "type": "string",
-              },
-              "key": {
-                "type": "string",
-              },
+            "mostRecent": {
+              "alt": "json",
+              "key": "abc",
             },
-            "required": [
-              "alt",
-              "key",
-            ],
-            "type": "object",
+            "parameters": {
+              "properties": {
+                "alt": {
+                  "type": "string",
+                },
+                "key": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "alt",
+                "key",
+              ],
+              "type": "object",
+            },
           },
           "request": {
             "application/json": {
@@ -117,6 +135,9 @@ exports[`flattens data into endpoints 1`] = `
                   "test",
                 ],
                 "type": "object",
+              },
+              "mostRecent": {
+                "test": "integer",
               },
             },
           },
@@ -144,6 +165,9 @@ exports[`flattens data into endpoints 1`] = `
                     "foo",
                   ],
                   "type": "object",
+                },
+                "mostRecent": {
+                  "foo": "bar",
                 },
               },
             },
@@ -175,19 +199,25 @@ exports[`flattens data into endpoints 1`] = `
       "methods": {
         "POST": {
           "queryParameters": {
-            "properties": {
-              "alt": {
-                "type": "string",
-              },
-              "key": {
-                "type": "string",
-              },
+            "mostRecent": {
+              "alt": "json",
+              "key": "abc",
             },
-            "required": [
-              "alt",
-              "key",
-            ],
-            "type": "object",
+            "parameters": {
+              "properties": {
+                "alt": {
+                  "type": "string",
+                },
+                "key": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "alt",
+                "key",
+              ],
+              "type": "object",
+            },
           },
           "request": {
             "application/json": {
@@ -201,6 +231,9 @@ exports[`flattens data into endpoints 1`] = `
                   "test",
                 ],
                 "type": "object",
+              },
+              "mostRecent": {
+                "test": "integer",
               },
             },
           },
@@ -228,6 +261,9 @@ exports[`flattens data into endpoints 1`] = `
                     "foo",
                   ],
                   "type": "object",
+                },
+                "mostRecent": {
+                  "foo": "bar",
                 },
               },
             },
@@ -263,19 +299,25 @@ exports[`flattens data into endpoints 1`] = `
       "methods": {
         "POST": {
           "queryParameters": {
-            "properties": {
-              "alt": {
-                "type": "string",
-              },
-              "key": {
-                "type": "string",
-              },
+            "mostRecent": {
+              "alt": "json",
+              "key": "abc",
             },
-            "required": [
-              "alt",
-              "key",
-            ],
-            "type": "object",
+            "parameters": {
+              "properties": {
+                "alt": {
+                  "type": "string",
+                },
+                "key": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "alt",
+                "key",
+              ],
+              "type": "object",
+            },
           },
           "request": {
             "application/json": {
@@ -289,6 +331,9 @@ exports[`flattens data into endpoints 1`] = `
                   "test",
                 ],
                 "type": "object",
+              },
+              "mostRecent": {
+                "test": "integer",
               },
             },
           },
@@ -316,6 +361,9 @@ exports[`flattens data into endpoints 1`] = `
                     "foo",
                   ],
                   "type": "object",
+                },
+                "mostRecent": {
+                  "foo": "bar",
                 },
               },
             },
@@ -351,19 +399,25 @@ exports[`flattens data into endpoints 1`] = `
       "methods": {
         "POST": {
           "queryParameters": {
-            "properties": {
-              "alt": {
-                "type": "string",
-              },
-              "key": {
-                "type": "string",
-              },
+            "mostRecent": {
+              "alt": "json",
+              "key": "abc",
             },
-            "required": [
-              "alt",
-              "key",
-            ],
-            "type": "object",
+            "parameters": {
+              "properties": {
+                "alt": {
+                  "type": "string",
+                },
+                "key": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "alt",
+                "key",
+              ],
+              "type": "object",
+            },
           },
           "request": {
             "application/json": {
@@ -377,6 +431,9 @@ exports[`flattens data into endpoints 1`] = `
                   "test",
                 ],
                 "type": "object",
+              },
+              "mostRecent": {
+                "test": "integer",
               },
             },
           },
@@ -404,6 +461,9 @@ exports[`flattens data into endpoints 1`] = `
                     "foo",
                   ],
                   "type": "object",
+                },
+                "mostRecent": {
+                  "foo": "bar",
                 },
               },
             },
@@ -439,19 +499,25 @@ exports[`flattens data into endpoints 1`] = `
       "methods": {
         "POST": {
           "queryParameters": {
-            "properties": {
-              "alt": {
-                "type": "string",
-              },
-              "key": {
-                "type": "string",
-              },
+            "mostRecent": {
+              "alt": "json",
+              "key": "abc",
             },
-            "required": [
-              "alt",
-              "key",
-            ],
-            "type": "object",
+            "parameters": {
+              "properties": {
+                "alt": {
+                  "type": "string",
+                },
+                "key": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "alt",
+                "key",
+              ],
+              "type": "object",
+            },
           },
           "request": {
             "application/json": {
@@ -465,6 +531,9 @@ exports[`flattens data into endpoints 1`] = `
                   "test",
                 ],
                 "type": "object",
+              },
+              "mostRecent": {
+                "test": "integer",
               },
             },
           },
@@ -492,6 +561,9 @@ exports[`flattens data into endpoints 1`] = `
                     "foo",
                   ],
                   "type": "object",
+                },
+                "mostRecent": {
+                  "foo": "bar",
                 },
               },
             },

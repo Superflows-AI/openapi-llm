@@ -1,4 +1,4 @@
-import { FC, useContext } from "react";
+import { FC, useState, useContext } from "react";
 import {
   Drawer,
   DrawerBody,
@@ -10,12 +10,14 @@ import {
   useToast,
   Tooltip,
   HStack,
+  Switch,
 } from "@chakra-ui/react";
 import { InfoOutlineIcon } from "@chakra-ui/icons";
 import Select, { MultiValue } from "react-select";
 import makeAnimated from "react-select/animated";
 import ControlDynamic from "./ControlDynamic";
 import ControlConfig from "./ControlConfig";
+import ControlDescripton from "./ControlDescription"
 import Context from "./context";
 
 type Props = {
@@ -24,12 +26,17 @@ type Props = {
 };
 
 const animatedComponents = makeAnimated();
+
 const bMinusA = (a: Set<string>, b: Array<string>) =>
   b.filter((x) => !a.has(x));
 type MultiValueType = MultiValue<{ value: string; label: string }>;
 
 const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
   const context = useContext(Context);
+
+  // Endpoint selection logic
+  const [showPathParameters, setShowPathParameters] = useState(true);
+
   const toast = useToast();
   const hosts = Array.from(context.allHosts);
   hosts.sort();
@@ -81,14 +88,19 @@ const ControlDrawer: FC<Props> = ({ isOpen, onClose }) => {
             classNamePrefix="select"
             components={animatedComponents}
           />
+          <HStack justifyContent="space-between">
+          <ControlDescripton />
+          </HStack>
           <HStack justifyContent="space-between" alignItems="center">
             <Heading as="h2" size="sm" margin="1em 0">
               Set Path Parameters
+              <Switch isChecked={showPathParameters} onChange={() => setShowPathParameters(!showPathParameters)} />
             </Heading>
-            <Tooltip
-              label="Click on a part in a pathname to make it a path parameter. I.e. in /posts/1, /posts/2, click 1 or 2 to create a single endpoint /posts/:param1. This is a one way operation."
-              placement="left"
-            >
+            {showPathParameters && <ControlDynamic />}
+              <Tooltip
+                label="Click on a part in a pathname to make it a path parameter. I.e. in /posts/1, /posts/2, click 1 or 2 to create a single endpoint /posts/:param1. This is a one way operation."
+                placement="left"
+              >
               <InfoOutlineIcon />
             </Tooltip>
           </HStack>
