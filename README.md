@@ -54,12 +54,20 @@ We customised this for the use case of feeding these OpenAPI Specifications to L
 
 This version of the browser extension is not currently available in the webstores. The original version is without the ability to add natural language descriptions is avaiable on webstores, you can [find it here](https://github.com/AndrewWalsh/openapi-devtools). If there is significant interest, we will add this version to webstores in future.
 
-To install manually:
-  - [Download and extract the dist.zip file in the latest release](https://github.com/AndrewWalsh/openapi-devtools/releases/latest/download/dist.zip)
+To install manually (Chrome):
+  - [Download and extract the dist-chrome.zip file in the latest release](https://github.com/Superflows-AI/openapi-llm/releases/latest/download/dist-chrome.zip)
   - In Chrome, navigate to `chrome://extensions`
   - In the top right enable the `Developer mode` toggle
   - In the top left click `Load unpacked` and select the extracted `dist` directory
   - Open a new tab and then select `OpenAPI` in the developer tools (open with `cmd+i` or `ctrl+i`)
+
+  To install manually (Firefox):
+  - [Download and extract the dist-firefox.zip file in the latest release](https://github.com/Superflows-AI/openapi-llm/releases/latest/download/dist-firefox.zip)
+  - In Firefox, navigate to `about:debugging#/runtime/this-firefox`
+  - In the top right enable click `Load Temporary Add-on...` toggle
+  - Navigate to the extracted `dist` folder and select and open `index.html`
+  - Open a new tab and then select `OpenAPI` in the developer tools
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -95,7 +103,11 @@ An [OpenAPI](https://www.openapis.org/) specification is a description of what a
 
 To develop the project:
 - `npm install`
-- `npm run dev`
+- If developing in Chrome:
+  - `npm run dev`
+- If developing in Firefox:
+  - `npm run build-firefox`
+  - `npm run dev`
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
