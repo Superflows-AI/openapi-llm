@@ -37,7 +37,7 @@ Example response (status: 200):
     it("with query parameters", () => {
         // Double JSON for deepcopy
         const localEndpoint = JSON.parse(JSON.stringify(endpoint));
-        // TODO: Look into why it's nested inside queryParameters (not in OpenAPI format)
+
         localEndpoint.data.methods.POST.queryParameters = {
             parameters: {
                 properties: {
