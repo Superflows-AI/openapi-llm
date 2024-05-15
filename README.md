@@ -12,6 +12,11 @@
 
 <br />
 
+
+<p align="center" width="100%">
+    <img width="80%" src="resources/demo.gif">
+</p>
+
  Generate a OpenAPI Specification in real time for any app or website, including descriptions of endpoints and parameters.
 
 <br />
@@ -20,17 +25,9 @@ A browser extension that discovers API behaviour via your interactions with a pr
 
 <br />
 
-This project is a fork of OpenAPI Devtools. Check out the <a href="https://github.com/AndrewWalsh/openapi-devtools"> original tool here. </a>
-
-<br />
-
 The <a href="https://www.superflows.ai/"> Superflows </a> team extended the functionality of the original tool after building AI assistants using OpenAPI specifications. We found it useful to have natural language descriptions in OpenAPI Specifications, both for human understanding and to increasing the reliability of AI assistants using them to make API calls (also recommended elsewhere, such as by [Anthropic](https://docs.anthropic.com/en/docs/tool-use#best-practices-for-tool-definitions)). 
 
 ## About The Project
-
-<p align="center" width="100%">
-    <img width="80%" src="resources/demo.gif">
-</p>
 
 <p>
 OpenAPI-LLM is built on top of the OpenAPI DevTools browser extension that generates OpenAPI specifications in real time from network requests. Once installed it adds a new tab to DevTools called `OpenAPI`. While the tool is running, it automatically converts network requests into a specification. You can then select endpoints you would like to have a natural language descriptions for, and generate descriptions of endpoints and parameters. 
@@ -43,6 +40,10 @@ We customised this for the use case of feeding these OpenAPI Specifications to L
 - Click on a [path parameter](https://www.abstractapi.com/api-glossary/path-parameters) and the app will automatically merge existing and future matching requests
 - View the specification inside the tool using [Redoc](https://www.npmjs.com/package/redoc) and download with a click
 - Describe endpoints of your choosing and their parameters using OpenAI's GPT4
+
+<br />
+
+This project is a fork of OpenAPI Devtools. Check out the <a href="https://github.com/AndrewWalsh/openapi-devtools"> original tool here. </a>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
