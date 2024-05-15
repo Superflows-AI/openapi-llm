@@ -6,7 +6,7 @@
 
 <div align="center">
   <a href="https://github.com/Superflows-AI/openapi-llm">
-    <img src="resources/logo.svg" alt="LLM for OpenAPI DevTool" width="300" height="250">
+    <img src="resources/logo.png" alt="LLM for OpenAPI DevTool" width="300" height="250">
   </a>
 </div>
 
