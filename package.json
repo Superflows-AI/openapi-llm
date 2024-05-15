@@ -8,7 +8,8 @@
     "test": "vitest",
     "dev": "tsc && vite build && web-ext run -s dist",
     "build": "tsc && vite build && web-ext build --overwrite-dest -s dist",
-    "lint": "eslint --ext ts,tsx --fix ."
+    "lint": "eslint --ext ts,tsx --fix .",
+    "build-firefox": "node modifyManifest.js"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
@@ -23,6 +24,7 @@
     "fast-querystring": "^1.1.2",
     "framer-motion": "^10.16.4",
     "fuse.js": "^6.6.2",
+    "fs": "^0.0.1-security",
     "genson-js": "^0.0.8",
     "gpt-tokenizer": "^2.1.2",
     "json-stable-stringify": "^1.0.2",

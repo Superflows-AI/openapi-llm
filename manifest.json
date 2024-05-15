@@ -3,7 +3,9 @@
   "name": "OpenAPI DevTools",
   "version": "1.5.2",
   "devtools_page": "index.html",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",
