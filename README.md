@@ -25,7 +25,7 @@ A browser extension that discovers API behaviour via your interactions with a pr
 
 <br />
 
-The <a href="https://www.superflows.ai/"> Superflows </a> team extended the functionality of the original tool after building AI assistants using OpenAPI specifications. We found it useful to have natural language descriptions in OpenAPI Specifications, both for human understanding and to increasing the reliability of AI assistants using them to make API calls (also recommended elsewhere, such as by [Anthropic](https://docs.anthropic.com/en/docs/tool-use#best-practices-for-tool-definitions)). 
+The <a href="https://www.superflows.ai/"> Superflows </a> team extended the functionality of the original tool after building AI assistants using OpenAPI specifications. It's useful to have natural language descriptions in OpenAPI Specifications both for human understanding, and to increase the reliability of AI assistants using them to make API calls (also recommended by [Anthropic](https://docs.anthropic.com/en/docs/tool-use#best-practices-for-tool-definitions)). 
 
 ## About The Project
 
